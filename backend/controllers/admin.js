@@ -28,7 +28,7 @@ const createEmployee = async (req, res) => {
     try {
         const connection = await getDbConnection();
         const [result] = await connection.execute(
-            'INSERT INTO employee_master (company_id, emp_name, emp_username, emp_password_hash, emp_phone, emp_email, emp_address, emp_dob, emp_hiring_date, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            'INSERT INTO employee_master (company_id, emp_name, emp_username, emp_password, emp_phone, emp_email, emp_address, emp_dob, emp_hiring_date, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
             [req.user.company_id, emp_name, emp_username, emp_password, emp_phone, emp_email, emp_address, emp_dob, emp_hiring_date, 'ACTIVE']
         );
         res.json({ emp_id: result.insertId, message: 'Employee created' });
@@ -52,7 +52,7 @@ const updateEmployee = async (req, res) => {
     try {
         const connection = await getDbConnection();
         await connection.execute(
-            'UPDATE employee_master SET emp_name = ?, emp_username = ?, emp_password_hash = ?, emp_phone = ?, emp_email = ?, emp_address = ?, emp_dob = ?, emp_hiring_date = ?, status = ? WHERE emp_id = ? AND company_id = ?',
+            'UPDATE employee_master SET emp_name = ?, emp_username = ?, emp_password = ?, emp_phone = ?, emp_email = ?, emp_address = ?, emp_dob = ?, emp_hiring_date = ?, status = ? WHERE emp_id = ? AND company_id = ?',
             [emp_name, emp_username, emp_password, emp_phone, emp_email, emp_address, emp_dob, emp_hiring_date, status, req.params.id, req.user.company_id]
         );
         res.json({ message: 'Employee updated' });
@@ -224,25 +224,25 @@ const deleteCustomer = async (req, res) => {
 
 // Create a new locality
 const createLocality = async (req, res) => {
-    const { locality_name } = req.body;
-    try {
-        if (!locality_name) {
-            return res.status(400).json({ error: 'locality_name is required' });
-        }
-
-        const connection = await getDbConnection();
-        const [result] = await connection.execute(
-            'INSERT INTO locality_master (company_id, locality_name, created_by, updated_by) VALUES (?, ?, ?, ?)',
-            [req.user.company_id, locality_name, req.user.id, req.user.id]
-        );
-        res.json({
-            company_id: req.user.company_id,
-            admin_id: req.user.id,
-            data: { locality_id: result.insertId, message: 'Locality created successfully' }
-        });
-    } catch (error) {
-        res.status(500).json({ error: 'Server error', details: error.message });
+  const { locality_name } = req.body;
+  try {
+    if (!locality_name) {
+      return res.status(400).json({ error: 'locality_name is required' });
     }
+
+    const connection = await getDbConnection();
+    const [result] = await connection.execute(
+      'INSERT INTO locality_master (company_id, locality_name) VALUES (?, ?)',
+      [req.user.company_id, locality_name]
+    );
+    res.json({
+      company_id: req.user.company_id,
+      admin_id: req.user.id,
+      data: { locality_id: result.insertId, message: 'Locality created successfully' }
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error', details: error.message });
+  }
 };
 
 // Update a locality

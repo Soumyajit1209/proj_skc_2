@@ -9,7 +9,7 @@ const storage = multer.diskStorage({
   filename: (req, file, cb) => {
     cb(null, `${Date.now()}-${file.fieldname}-${req.user.emp_id}${path.extname(file.originalname)}`);
   }
-});
+  });
 const upload = multer({ storage });
 
 const login = async (req, res) => {
@@ -23,9 +23,104 @@ const login = async (req, res) => {
     if (rows.length === 0) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
-    res.json({ emp_id: rows[0].emp_id, company_id: rows[0].company_id, message: 'Login successful' });
+   
+    res.json({ emp_id: rows[0].emp_id, company_id: rows[0].company_id, emp_password: rows[0].emp_password,message: 'Login successful' });
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
+  }
+};
+
+const fetchEmployeeData = async (req, res) => {
+  const {emp_id,company_id, emp_password } = req.body;
+  try{
+    const connection = await getDbConnection();
+    const [rows] = await connection.execute(
+      'SELECT * FROM employee_master WHERE company_id = ? AND emp_id = ? AND emp_password = ?',
+      [company_id, emp_id, emp_password]
+    );
+    if (rows.length === 0) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+    const employeeData  = {...rows[0] };
+    res.json({ emp_id: rows[0].emp_id, company_id: rows[0].company_id, emp_data : employeeData , message: 'Employee data fetched successfully' });
+  }  catch(error){
+    res.status(500).json({ error: 'Server error' });
+  }
+}
+
+const updateEmployeeDetails = async (req, res) => {
+  const { emp_name, emp_phone, emp_email, emp_address } = req.body;
+  try {
+    // Validate that at least one field is provided
+    const updates = { emp_name, emp_phone, emp_email, emp_address };
+    const updateFields = Object.keys(updates).filter(key => updates[key] !== undefined && updates[key] !== null);
+    if (updateFields.length === 0) {
+      return res.status(400).json({ error: 'At least one field (emp_name, emp_phone, emp_email, emp_address) is required' });
+    }
+
+    const connection = await getDbConnection();
+    // Fetch current employee details to verify existence
+    const [currentRows] = await connection.execute(
+      'SELECT * FROM employee_master WHERE emp_id = ? AND company_id = ?',
+      [req.user.id, req.user.company_id]
+    );
+
+    if (currentRows.length === 0) {
+      return res.status(404).json({ error: 'Employee not found' });
+    }
+
+    // Dynamically build the SET clause and values
+    const setClause = updateFields.map(field => `${field} = ?`).join(', ');
+    const values = [...updateFields.map(field => updates[field]), req.user.id, req.user.company_id]; // Include WHERE clause values
+
+    const [result] = await connection.execute(
+      `UPDATE employee_master SET ${setClause}, updated_at = CURRENT_TIMESTAMP WHERE emp_id = ? AND company_id = ?`,
+      values
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'No changes made or employee not found' });
+    }
+
+    res.json({
+      company_id: req.user.company_id,
+      emp_id: req.user.id,
+      data: { message: 'Employee details updated successfully' }
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error', details: error.message });
+  }
+};
+
+const changeEmployeePassword = async (req, res) => {
+  const { current_password, new_password } = req.body;
+  try {
+    if (!current_password || !new_password) {
+      return res.status(400).json({ error: 'current_password and new_password are required' });
+    }
+
+    const connection = await getDbConnection();
+    const [rows] = await connection.execute(
+      'SELECT * FROM employee_master WHERE emp_id = ? AND company_id = ? AND emp_password = ?',
+      [req.user.id, req.user.company_id, current_password]
+    );
+
+    if (rows.length === 0) {
+      return res.status(401).json({ error: 'Invalid current password' });
+    }
+
+    await connection.execute(
+      'UPDATE employee_master SET emp_password = ?, updated_at = CURRENT_TIMESTAMP WHERE emp_id = ? AND company_id = ?',
+      [new_password, req.user.id, req.user.company_id]
+    );
+
+    res.json({
+      company_id: req.user.company_id,
+      emp_id: req.user.id,
+      data: { message: 'Password changed successfully' }
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error', details: error.message });
   }
 };
 
@@ -184,32 +279,56 @@ const createPayment = async (req, res) => {
 const getReports = async (req, res) => {
   const { report_type, order_id, customer_id } = req.body;
   try {
+    if (!report_type || !order_id || !customer_id) {
+      return res.status(400).json({ error: 'report_type, order_id, and customer_id are required' });
+    }
+
     const connection = await getDbConnection();
     let report_data = {};
+
     if (report_type === 'ORDER_REPORT' || report_type === 'BILL') {
+      // Validate that the order belongs to the specified customer
       const [order] = await connection.execute(
-        'SELECT s.*, c.customer_name FROM sales_order s JOIN customer_master c ON s.customer_id = c.customer_id WHERE s.order_id = ? AND s.company_id = ?',
-        [order_id, req.user.company_id]
+        'SELECT s.*, c.customer_name FROM sales_order s JOIN customer_master c ON s.customer_id = c.customer_id WHERE s.order_id = ? AND s.customer_id = ? AND s.company_id = ?',
+        [order_id, customer_id, req.user.company_id]
       );
+      if (!order.length) {
+        return res.status(404).json({ error: 'Order not found for the specified customer' });
+      }
       const [items] = await connection.execute(
         'SELECT od.*, p.product_name FROM order_details od JOIN product_master p ON od.product_id = p.product_id WHERE od.order_id = ? AND od.company_id = ?',
         [order_id, req.user.company_id]
       );
       report_data = { order: order[0], items };
     } else if (report_type === 'PAYMENT_RECEIPT') {
+      // Use payment_id instead of order_id for payment receipt
       const [payment] = await connection.execute(
-        'SELECT p.*, c.customer_name FROM payment p JOIN customer_master c ON p.customer_id = c.customer_id WHERE p.payment_id = ? AND p.company_id = ?',
-        [order_id, req.user.company_id]
+        'SELECT p.*, c.customer_name FROM payment p JOIN customer_master c ON p.customer_id = c.customer_id WHERE p.payment_id = ? AND p.customer_id = ? AND p.company_id = ?',
+        [order_id, customer_id, req.user.company_id] // Assuming order_id is intended to be payment_id here
       );
+      if (!payment.length) {
+        return res.status(404).json({ error: 'Payment not found for the specified customer' });
+      }
       report_data = payment[0];
+    } else {
+      return res.status(400).json({ error: 'Invalid report_type' });
     }
+
     const [result] = await connection.execute(
       'INSERT INTO report_log (company_id, report_type, order_id, customer_id, generated_by, report_data) VALUES (?, ?, ?, ?, ?, ?)',
       [req.user.company_id, report_type, order_id, customer_id, req.user.id, JSON.stringify(report_data)]
     );
-    res.json({ report_id: result.insertId, report_data, message: 'Report generated' });
+    res.json({
+      company_id: req.user.company_id,
+      emp_id: req.user.id,
+      data: {
+        report_id: result.insertId,
+        report_data,
+        message: 'Report generated'
+      }
+    });
   } catch (error) {
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: 'Server error', details: error.message });
   }
 };
 
@@ -341,31 +460,33 @@ const getCheckOutAttendance = async (req, res) => {
 };
 
 const getAttendanceSummary = async (req, res) => {
-  const { start_date, end_date } = req.query;
+  const { start_date, end_date } = req.body;
   try {
     const connection = await getDbConnection();
-    let query = `
-      SELECT attendance_date, in_time, out_time, in_pic, out_picture as out_pic, in_status
-      FROM attendance_register 
-      WHERE company_id = ? AND emp_id = ?`;
-    let params = [req.user.company_id, req.user.id];
+    // Default start_date to a very early date and end_date to a very late date if not provided
+    const effectiveStartDate = start_date || '1970-01-01';
+    const effectiveEndDate = end_date || '9999-12-31';
 
-    if (start_date) {
-      query += ' AND DATE(attendance_date) >= ?';
-      params.push(start_date);
-    }
-    if (end_date) {
-      query += ' AND DATE(attendance_date) <= ?';
-      params.push(end_date);
-    }
+    const [rows] = await connection.execute(
+      `
+        SELECT attendance_date, in_time, out_time, in_pic, out_picture AS out_pic, in_status
+        FROM attendance_register 
+        WHERE company_id = ? AND emp_id = ? 
+        AND DATE(attendance_date) >= ? 
+        AND DATE(attendance_date) <= ?
+      `,
+      [req.user.company_id, req.user.id, effectiveStartDate, effectiveEndDate]
+    );
 
-    const [rows] = await connection.execute(query, params);
     res.json({
+      company_id: req.user.company_id,
       emp_id: req.user.id,
-      attendance_records: rows
+      data: {
+        attendance_records: rows
+      }
     });
   } catch (error) {
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: 'Server error', details: error.message });
   }
 };
 
@@ -383,5 +504,8 @@ module.exports = {
   checkOutAttendance,
   getCheckInAttendance,
   getCheckOutAttendance,
-  getAttendanceSummary
+  getAttendanceSummary,
+  fetchEmployeeData,
+  updateEmployeeDetails,
+  changeEmployeePassword
 }

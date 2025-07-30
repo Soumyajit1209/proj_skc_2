@@ -37,8 +37,8 @@ app.use('/uploads', express.static('uploads'));
 
 
 // Mount routes
-//app.use('/api/superadmin', superadminRoutes);
-//app.use('/api/admin', adminRoutes);
+app.use('/api/superadmin', superadminRoutes);
+app.use('/api/admin', adminRoutes);
 app.use('/api/employee', employeeRoutes);
 
 

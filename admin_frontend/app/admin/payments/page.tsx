@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Alert, AlertDescription } from "@/components/ui/alert"
 import { CheckCircle, XCircle, Clock, CreditCard } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
 
 interface Payment {
   payment_id: number
@@ -21,8 +21,7 @@ interface Payment {
 export default function PaymentsPage() {
   const [payments, setPayments] = useState<Payment[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState("")
-  const [success, setSuccess] = useState("")
+  const { toast } = useToast()
 
   useEffect(() => {
     fetchPayments()
@@ -42,10 +41,18 @@ export default function PaymentsPage() {
         const data = await response.json()
         setPayments(data)
       } else {
-        setError("Failed to fetch payments")
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to fetch payments data",
+        })
       }
     } catch (error) {
-      setError("Network error occurred")
+      toast({
+        variant: "destructive",
+        title: "Network Error",
+        description: "Unable to connect to server",
+      })
     } finally {
       setLoading(false)
     }
@@ -64,14 +71,26 @@ export default function PaymentsPage() {
       })
 
       if (response.ok) {
-        setSuccess(`Payment ${status.toLowerCase()} successfully`)
+        toast({
+          variant: "success",
+          title: `Payment ${status === "APPROVED" ? "Approved" : "Rejected"}! ✅`,
+          description: `Payment #${paymentId} has been ${status.toLowerCase()} successfully`,
+        })
         fetchPayments()
       } else {
         const data = await response.json()
-        setError(data.error || `Failed to ${status.toLowerCase()} payment`)
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: data.error || `Failed to ${status.toLowerCase()} payment`,
+        })
       }
     } catch (error) {
-      setError("Network error occurred")
+      toast({
+        variant: "destructive",
+        title: "Network Error",
+        description: "Unable to connect to server",
+      })
     }
   }
 
@@ -131,18 +150,6 @@ export default function PaymentsPage() {
         <h1 className="text-3xl font-bold text-gray-900">Payments</h1>
         <p className="text-gray-600 mt-2">Manage payment approvals and track payment status</p>
       </div>
-
-      {error && (
-        <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-
-      {success && (
-        <Alert>
-          <AlertDescription>{success}</AlertDescription>
-        </Alert>
-      )}
 
       {/* Payment Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">

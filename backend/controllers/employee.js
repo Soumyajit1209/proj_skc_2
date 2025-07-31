@@ -5,7 +5,7 @@ const multer = require('multer');
 const path = require('path');
 
 const storage = multer.diskStorage({
-  destination: './uploads/',
+  destination: './uploads/attendance_pictures',
   filename: (req, file, cb) => {
     cb(null, `${Date.now()}-${file.fieldname}-${req.user.emp_id}${path.extname(file.originalname)}`);
   }
@@ -31,66 +31,71 @@ const login = async (req, res) => {
 };
 
 const fetchEmployeeData = async (req, res) => {
-  const {emp_id,company_id, emp_password } = req.body;
-  try{
+  const { emp_id, company_id, emp_password } = req.body;
+  try {
     const connection = await getDbConnection();
     const [rows] = await connection.execute(
-      'SELECT * FROM employee_master WHERE company_id = ? AND emp_id = ? AND emp_password = ?',
+      'SELECT emp_id, company_id, emp_name, emp_username, profile_picture, emp_phone, emp_email, emp_address, emp_dob, emp_hiring_date, status FROM employee_master WHERE company_id = ? AND emp_id = ? AND emp_password = ?',
       [company_id, emp_id, emp_password]
     );
     if (rows.length === 0) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
-    const employeeData  = {...rows[0] };
-    res.json({ emp_id: rows[0].emp_id, company_id: rows[0].company_id, emp_data : employeeData , message: 'Employee data fetched successfully' });
-  }  catch(error){
-    res.status(500).json({ error: 'Server error' });
-  }
-}
-
-const updateEmployeeDetails = async (req, res) => {
-  const { emp_name, emp_phone, emp_email, emp_address } = req.body;
-  try {
-    // Validate that at least one field is provided
-    const updates = { emp_name, emp_phone, emp_email, emp_address };
-    const updateFields = Object.keys(updates).filter(key => updates[key] !== undefined && updates[key] !== null);
-    if (updateFields.length === 0) {
-      return res.status(400).json({ error: 'At least one field (emp_name, emp_phone, emp_email, emp_address) is required' });
-    }
-
-    const connection = await getDbConnection();
-    // Fetch current employee details to verify existence
-    const [currentRows] = await connection.execute(
-      'SELECT * FROM employee_master WHERE emp_id = ? AND company_id = ?',
-      [req.user.id, req.user.company_id]
-    );
-
-    if (currentRows.length === 0) {
-      return res.status(404).json({ error: 'Employee not found' });
-    }
-
-    // Dynamically build the SET clause and values
-    const setClause = updateFields.map(field => `${field} = ?`).join(', ');
-    const values = [...updateFields.map(field => updates[field]), req.user.id, req.user.company_id]; // Include WHERE clause values
-
-    const [result] = await connection.execute(
-      `UPDATE employee_master SET ${setClause}, updated_at = CURRENT_TIMESTAMP WHERE emp_id = ? AND company_id = ?`,
-      values
-    );
-
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ error: 'No changes made or employee not found' });
-    }
-
-    res.json({
-      company_id: req.user.company_id,
-      emp_id: req.user.id,
-      data: { message: 'Employee details updated successfully' }
-    });
+    const employeeData = { ...rows[0] };
+    res.json({ emp_id: rows[0].emp_id, company_id: rows[0].company_id, emp_data: employeeData, message: 'Employee data fetched successfully' });
   } catch (error) {
     res.status(500).json({ error: 'Server error', details: error.message });
   }
 };
+
+const updateEmployeeDetails = [
+  upload.single('profile_picture'),
+  async (req, res) => {
+    const { emp_name, emp_phone, emp_email, emp_address } = req.body;
+    try {
+      const profilePicturePath = req.file ? `/uploads/profile_pictures/${req.file.filename}` : null;
+      const updates = { emp_name, emp_phone, emp_email, emp_address, profile_picture: profilePicturePath };
+      const updateFields = Object.keys(updates).filter(key => updates[key] !== undefined && updates[key] !== null);
+      if (updateFields.length === 0) {
+        return res.status(400).json({ error: 'At least one field (emp_name, emp_phone, emp_email, emp_address, profile_picture) is required' });
+      }
+
+      const connection = await getDbConnection();
+      const [currentRows] = await connection.execute(
+        'SELECT profile_picture FROM employee_master WHERE emp_id = ? AND company_id = ?',
+        [req.user.id, req.user.company_id]
+      );
+      if (currentRows.length === 0) {
+        return res.status(404).json({ error: 'Employee not found' });
+      }
+
+      // Use existing profile picture if not updated
+      if (!profilePicturePath) {
+        updates.profile_picture = currentRows[0].profile_picture;
+      }
+
+      const setClause = updateFields.map(field => `${field} = ?`).join(', ');
+      const values = [...updateFields.map(field => updates[field]), req.user.id, req.user.company_id];
+
+      const [result] = await connection.execute(
+        `UPDATE employee_master SET ${setClause}, updated_at = CURRENT_TIMESTAMP WHERE emp_id = ? AND company_id = ?`,
+        values
+      );
+
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ error: 'No changes made or employee not found' });
+      }
+
+      res.json({
+        company_id: req.user.company_id,
+        emp_id: req.user.id,
+        data: { message: 'Employee details updated successfully' }
+      });
+    } catch (error) {
+      res.status(500).json({ error: 'Server error', details: error.message });
+    }
+  }
+];
 
 const changeEmployeePassword = async (req, res) => {
   const { current_password, new_password } = req.body;
@@ -490,6 +495,27 @@ const getAttendanceSummary = async (req, res) => {
   }
 };
 
+
+const getProducts = async (req, res) => {
+  try {
+    const connection = await getDbConnection();
+    const [rows] = await connection.execute(
+      'SELECT product_id, product_name, unit_price, remarks, created_at, updated_at FROM product_master WHERE company_id = ?',
+      [req.user.company_id]
+    );
+    res.json({
+      company_id: req.user.company_id,
+      emp_id: req.user.id,
+      data: {
+        products: rows,
+        message: 'Products fetched successfully'
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error', details: error.message });
+  }
+};
+
 module.exports = {
   login,
   getLocalities,
@@ -507,5 +533,6 @@ module.exports = {
   getAttendanceSummary,
   fetchEmployeeData,
   updateEmployeeDetails,
-  changeEmployeePassword
+  changeEmployeePassword,
+  getProducts
 }

@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -43,8 +42,8 @@ export default function CustomersPage() {
   const [localities, setLocalities] = useState<Locality[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [isEditMode, setIsEditMode] = useState(false)
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
   const [formData, setFormData] = useState({
     customer_name: "",
@@ -65,7 +64,6 @@ export default function CustomersPage() {
   const fetchCustomers = async () => {
     try {
       const token = localStorage.getItem("token")
-      // Note: You'll need to add this endpoint to your backend
       const response = await fetch("http://localhost:3001/api/admin/customers", {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -75,7 +73,7 @@ export default function CustomersPage() {
 
       if (response.ok) {
         const data = await response.json()
-        setCustomers(data)
+        setCustomers(data.data?.customers || [])
       } else {
         setError("Failed to fetch customers")
       }
@@ -126,12 +124,72 @@ export default function CustomersPage() {
 
       if (response.ok) {
         setSuccess("Customer added successfully")
-        setIsAddDialogOpen(false)
+        setIsDialogOpen(false)
         resetForm()
         fetchCustomers()
       } else {
         const data = await response.json()
         setError(data.error || "Failed to add customer")
+      }
+    } catch (error) {
+      setError("Network error occurred")
+    }
+  }
+
+  const handleEditCustomer = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError("")
+    setSuccess("")
+
+    if (!selectedCustomer) return
+
+    try {
+      const token = localStorage.getItem("token")
+      const response = await fetch(`http://localhost:3001/api/admin/customers/${selectedCustomer.customer_id}`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...formData,
+          locality_id: Number.parseInt(formData.locality_id),
+        }),
+      })
+
+      if (response.ok) {
+        setSuccess("Customer updated successfully")
+        setIsDialogOpen(false)
+        resetForm()
+        fetchCustomers()
+      } else {
+        const data = await response.json()
+        setError(data.error || "Failed to update customer")
+      }
+    } catch (error) {
+      setError("Network error occurred")
+    }
+  }
+
+  const handleDeleteCustomer = async (customerId: number) => {
+    if (!window.confirm("Are you sure you want to delete this customer?")) return
+
+    try {
+      const token = localStorage.getItem("token")
+      const response = await fetch(`http://localhost:3001/api/admin/customers/${customerId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      })
+
+      if (response.ok) {
+        setSuccess("Customer deleted successfully")
+        fetchCustomers()
+      } else {
+        const data = await response.json()
+        setError(data.error || "Failed to delete customer")
       }
     } catch (error) {
       setError("Network error occurred")
@@ -148,6 +206,21 @@ export default function CustomersPage() {
       status: "ACTIVE",
     })
     setSelectedCustomer(null)
+    setIsEditMode(false)
+  }
+
+  const openEditDialog = (customer: Customer) => {
+    setSelectedCustomer(customer)
+    setIsEditMode(true)
+    setFormData({
+      customer_name: customer.customer_name,
+      customer_phone: customer.customer_phone || "",
+      customer_email: customer.customer_email || "",
+      customer_address: customer.customer_address || "",
+      locality_id: customer.locality_id.toString(),
+      status: customer.status,
+    })
+    setIsDialogOpen(true)
   }
 
   const getLocalityName = (localityId: number) => {
@@ -191,19 +264,21 @@ export default function CustomersPage() {
           <h1 className="text-3xl font-bold text-gray-900">Customers</h1>
           <p className="text-gray-600 mt-2">Manage your customer database</p>
         </div>
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button onClick={resetForm}>
+            <Button onClick={() => { resetForm(); setIsDialogOpen(true); }}>
               <Plus className="h-4 w-4 mr-2" />
               Add Customer
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Add New Customer</DialogTitle>
-              <DialogDescription>Fill in the customer details below</DialogDescription>
+              <DialogTitle>{isEditMode ? "Edit Customer" : "Add New Customer"}</DialogTitle>
+              <DialogDescription>
+                {isEditMode ? "Update the customer details below" : "Fill in the customer details below"}
+              </DialogDescription>
             </DialogHeader>
-            <form onSubmit={handleAddCustomer} className="space-y-4">
+            <form onSubmit={isEditMode ? handleEditCustomer : handleAddCustomer} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="customer_name">Customer Name</Label>
@@ -220,6 +295,7 @@ export default function CustomersPage() {
                     id="customer_phone"
                     value={formData.customer_phone}
                     onChange={(e) => setFormData({ ...formData, customer_phone: e.target.value })}
+                    required
                   />
                 </div>
               </div>
@@ -245,6 +321,7 @@ export default function CustomersPage() {
                 <Select
                   value={formData.locality_id}
                   onValueChange={(value) => setFormData({ ...formData, locality_id: value })}
+                  required
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select locality" />
@@ -258,11 +335,27 @@ export default function CustomersPage() {
                   </SelectContent>
                 </Select>
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="status">Status</Label>
+                <Select
+                  value={formData.status}
+                  onValueChange={(value) => setFormData({ ...formData, status: value as "ACTIVE" | "INACTIVE" })}
+                  required
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ACTIVE">Active</SelectItem>
+                    <SelectItem value="INACTIVE">Inactive</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
                   Cancel
                 </Button>
-                <Button type="submit">Add Customer</Button>
+                <Button type="submit">{isEditMode ? "Update Customer" : "Add Customer"}</Button>
               </DialogFooter>
             </form>
           </DialogContent>
@@ -329,10 +422,15 @@ export default function CustomersPage() {
                   <TableCell>{new Date(customer.created_at).toLocaleDateString()}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm" onClick={() => openEditDialog(customer)}>
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700 bg-transparent">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-red-600 hover:text-red-700 bg-transparent"
+                        onClick={() => handleDeleteCustomer(customer.customer_id)}
+                      >
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>

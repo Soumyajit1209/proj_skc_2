@@ -6,12 +6,12 @@ import { useEffect, useState } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { BarChart3, Building2, Menu, LogOut, Shield } from "lucide-react"
+import { BarChart3, Building2, Menu, LogOut, Shield, Crown } from "lucide-react"
 import Link from "next/link"
 
 const navigation = [
-  { name: "Dashboard", href: "/superadmin/dashboard", icon: BarChart3 },
-  { name: "Companies", href: "/superadmin/companies", icon: Building2 },
+  { name: "Dashboard", href: "/superadmin/home", icon: BarChart3, color: "text-purple-600" },
+  { name: "Companies", href: "/superadmin/companies", icon: Building2, color: "text-indigo-600" },
 ]
 
 export default function SuperAdminLayout({
@@ -39,49 +39,64 @@ export default function SuperAdminLayout({
   }
 
   const Sidebar = ({ mobile = false }) => (
-    <div className={`flex flex-col h-full ${mobile ? "w-full" : "w-64"} bg-white border-r border-gray-200`}>
-      <div className="flex items-center gap-2 px-6 py-4 border-b border-gray-200">
-        <Shield className="h-8 w-8 text-purple-600" />
+    <div
+      className={`flex flex-col h-full ${mobile ? "w-full" : "w-64"} bg-gradient-to-b from-white to-purple-50 border-r border-purple-200 shadow-xl`}
+    >
+      <div className="flex items-center gap-3 px-6 py-6 border-b border-purple-200 bg-gradient-to-r from-purple-50 to-indigo-50">
+        <div className="relative">
+          <Shield className="h-10 w-10 text-purple-600" />
+          <Crown className="h-4 w-4 text-yellow-500 absolute -top-1 -right-1 animate-pulse" />
+        </div>
         <div>
-          <h1 className="text-lg font-semibold text-gray-900">Super Admin</h1>
-          <p className="text-sm text-gray-500">SKC Marketing</p>
+          <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+            Super Admin
+          </h1>
+          <p className="text-sm text-gray-500 font-medium">SKC Marketing</p>
         </div>
       </div>
 
-      <nav className="flex-1 px-4 py-4 space-y-2">
-        {navigation.map((item) => {
+      <nav className="flex-1 px-4 py-6 space-y-2">
+        {navigation.map((item, index) => {
           const isActive = pathname === item.href
           return (
             <Link
               key={item.name}
               href={item.href}
-              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+              className={`group flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
                 isActive
-                  ? "bg-purple-50 text-purple-700 border border-purple-200"
-                  : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                  ? "bg-gradient-to-r from-purple-50 to-indigo-50 text-purple-700 border border-purple-200 shadow-lg"
+                  : "text-gray-700 hover:bg-gradient-to-r hover:from-gray-50 hover:to-purple-50 hover:text-gray-900 hover:shadow-md"
               }`}
               onClick={() => mobile && setSidebarOpen(false)}
+              style={{ animationDelay: `${index * 50}ms` }}
             >
-              <item.icon className="h-5 w-5" />
-              {item.name}
+              <item.icon
+                className={`h-5 w-5 transition-colors duration-300 ${isActive ? "text-purple-600" : item.color} group-hover:scale-110`}
+              />
+              <span className="font-semibold">{item.name}</span>
+              {isActive && <div className="ml-auto w-2 h-2 bg-purple-600 rounded-full animate-pulse"></div>}
             </Link>
           )
         })}
       </nav>
 
-      <div className="p-4 border-t border-gray-200">
-        <Button variant="outline" className="w-full justify-start gap-2 bg-transparent" onClick={handleLogout}>
+      <div className="p-4 border-t border-purple-200 bg-gradient-to-r from-purple-50 to-indigo-50">
+        <Button
+          variant="outline"
+          className="w-full justify-start gap-3 bg-white hover:bg-red-50 hover:border-red-200 hover:text-red-600 transition-all duration-300 transform hover:scale-105 shadow-sm hover:shadow-md"
+          onClick={handleLogout}
+        >
           <LogOut className="h-4 w-4" />
-          Logout
+          <span className="font-semibold">Logout</span>
         </Button>
       </div>
     </div>
   )
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-gradient-to-br from-purple-50 to-indigo-50">
       {/* Desktop Sidebar */}
-      <div className="hidden lg:flex">
+      <div className="hidden lg:flex animate-in slide-in-from-left duration-500">
         <Sidebar />
       </div>
 
@@ -95,25 +110,36 @@ export default function SuperAdminLayout({
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Mobile Header */}
-        <div className="lg:hidden flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200">
+        <div className="lg:hidden flex items-center justify-between px-4 py-4 bg-white/80 backdrop-blur-xl border-b border-purple-200 shadow-sm">
           <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="sm">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="hover:bg-purple-50 hover:text-purple-600 transition-colors duration-200"
+              >
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>
           </Sheet>
           <div className="flex items-center gap-2">
             <Shield className="h-6 w-6 text-purple-600" />
-            <span className="font-semibold">Super Admin</span>
+            <span className="font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+              Super Admin
+            </span>
           </div>
-          <Button variant="ghost" size="sm" onClick={handleLogout}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleLogout}
+            className="hover:bg-red-50 hover:text-red-600 transition-colors duration-200"
+          >
             <LogOut className="h-4 w-4" />
           </Button>
         </div>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-auto">{children}</main>
+        <main className="flex-1 overflow-auto animate-in fade-in-0 duration-500">{children}</main>
       </div>
     </div>
   )

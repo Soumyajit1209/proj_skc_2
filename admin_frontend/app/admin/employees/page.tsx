@@ -19,8 +19,8 @@ import {
 } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Plus, Edit, Trash2, Search, User } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
 
 interface Employee {
   emp_id: number
@@ -53,8 +53,7 @@ export default function EmployeesPage() {
     emp_hiring_date: "",
     status: "ACTIVE" as "ACTIVE" | "INACTIVE" | "TERMINATED",
   })
-  const [error, setError] = useState("")
-  const [success, setSuccess] = useState("")
+  const { toast } = useToast()
 
   useEffect(() => {
     fetchEmployees()
@@ -74,10 +73,18 @@ export default function EmployeesPage() {
         const data = await response.json()
         setEmployees(data)
       } else {
-        setError("Failed to fetch employees")
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to fetch employees data",
+        })
       }
     } catch (error) {
-      setError("Network error occurred")
+      toast({
+        variant: "destructive",
+        title: "Network Error",
+        description: "Unable to connect to server",
+      })
     } finally {
       setLoading(false)
     }
@@ -85,8 +92,6 @@ export default function EmployeesPage() {
 
   const handleAddEmployee = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError("")
-    setSuccess("")
 
     try {
       const token = localStorage.getItem("token")
@@ -100,25 +105,34 @@ export default function EmployeesPage() {
       })
 
       if (response.ok) {
-        setSuccess("Employee added successfully")
+        toast({
+          variant: "success",
+          title: "Success! 🎉",
+          description: "Employee added successfully",
+        })
         setIsAddDialogOpen(false)
         resetForm()
         fetchEmployees()
       } else {
         const data = await response.json()
-        setError(data.error || "Failed to add employee")
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: data.error || "Failed to add employee",
+        })
       }
     } catch (error) {
-      setError("Network error occurred")
+      toast({
+        variant: "destructive",
+        title: "Network Error",
+        description: "Unable to connect to server",
+      })
     }
   }
 
   const handleEditEmployee = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!selectedEmployee) return
-
-    setError("")
-    setSuccess("")
 
     try {
       const token = localStorage.getItem("token")
@@ -132,16 +146,28 @@ export default function EmployeesPage() {
       })
 
       if (response.ok) {
-        setSuccess("Employee updated successfully")
+        toast({
+          variant: "success",
+          title: "Success! ✨",
+          description: "Employee updated successfully",
+        })
         setIsEditDialogOpen(false)
         resetForm()
         fetchEmployees()
       } else {
         const data = await response.json()
-        setError(data.error || "Failed to update employee")
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: data.error || "Failed to update employee",
+        })
       }
     } catch (error) {
-      setError("Network error occurred")
+      toast({
+        variant: "destructive",
+        title: "Network Error",
+        description: "Unable to connect to server",
+      })
     }
   }
 
@@ -159,14 +185,26 @@ export default function EmployeesPage() {
       })
 
       if (response.ok) {
-        setSuccess("Employee terminated successfully")
+        toast({
+          variant: "success",
+          title: "Employee Terminated",
+          description: "Employee has been terminated successfully",
+        })
         fetchEmployees()
       } else {
         const data = await response.json()
-        setError(data.error || "Failed to terminate employee")
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: data.error || "Failed to terminate employee",
+        })
       }
     } catch (error) {
-      setError("Network error occurred")
+      toast({
+        variant: "destructive",
+        title: "Network Error",
+        description: "Unable to connect to server",
+      })
     }
   }
 
@@ -339,18 +377,6 @@ export default function EmployeesPage() {
           </DialogContent>
         </Dialog>
       </div>
-
-      {error && (
-        <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-
-      {success && (
-        <Alert>
-          <AlertDescription>{success}</AlertDescription>
-        </Alert>
-      )}
 
       <Card>
         <CardHeader>

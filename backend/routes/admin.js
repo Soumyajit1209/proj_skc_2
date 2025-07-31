@@ -24,7 +24,9 @@ const {
     updateCustomer,
     deleteCustomer,
     deleteLocality,
-    updateLocality
+    updateLocality,
+    getOrders,
+    getOrderDetails
 } = require('../controllers/admin');
 
 router.post('/login', login);
@@ -61,5 +63,10 @@ router.get('/attendance', authenticateToken, restrictToRole('admin'), getAllAtte
 router.delete('/attendance/:id', authenticateToken, restrictToRole('admin'), deleteAttendance);
 router.put('/attendance/:id/reject', authenticateToken, restrictToRole('admin'), rejectAttendance);
 router.get('/attendance/report', authenticateToken, restrictToRole('admin'), getAttendanceReport);
+
+router.get('/orders', authenticateToken, restrictToRole('admin'), getOrders);
+router.get('/orders/:id/details', authenticateToken, restrictToRole('admin'), getOrderDetails);
+
+
 
 module.exports = router;

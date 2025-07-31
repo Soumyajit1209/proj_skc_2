@@ -1,33 +1,32 @@
 "use client"
 
+import type React from "react"
 import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Input } from "@/components/ui/input"
-import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search, Clock, CheckCircle, XCircle, Trash2, User } from "lucide-react"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Badge } from "@/components/ui/badge"
+import { Search, Trash2 } from "lucide-react"
 
 interface AttendanceRecord {
   attendance_id: number
   emp_id: number
   emp_name: string
   attendance_date: string
-  in_time: string
+  in_time: string | null
   out_time: string | null
   in_status: "PRESENT" | "ABSENT" | "LATE"
-  in_location: string
-  out_location: string | null
-  remarks: string | null
+  created_at: string
 }
 
 export default function AttendancePage() {
   const [attendance, setAttendance] = useState<AttendanceRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
-  const [statusFilter, setStatusFilter] = useState<string>("all")
+  const [statusFilter, setStatusFilter] = useState<"all" | "PRESENT" | "ABSENT" | "LATE">("all")
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
 
@@ -47,7 +46,7 @@ export default function AttendancePage() {
 
       if (response.ok) {
         const data = await response.json()
-        setAttendance(data)
+        setAttendance(data || [])
       } else {
         setError("Failed to fetch attendance records")
       }
@@ -59,7 +58,7 @@ export default function AttendancePage() {
   }
 
   const handleDeleteAttendance = async (attendanceId: number) => {
-    if (!confirm("Are you sure you want to delete this attendance record?")) return
+    if (!window.confirm("Are you sure you want to delete this attendance record?")) return
 
     try {
       const token = localStorage.getItem("token")
@@ -107,39 +106,24 @@ export default function AttendancePage() {
     }
   }
 
+  const filteredAttendance = attendance.filter((record) => {
+    const matchesSearch = record.emp_name?.toLowerCase().includes(searchTerm.toLowerCase()) || false
+    const matchesStatus = statusFilter === "all" || record.in_status === statusFilter
+    return matchesSearch && matchesStatus
+  })
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "PRESENT":
-        return (
-          <Badge className="bg-green-100 text-green-800">
-            <CheckCircle className="h-3 w-3 mr-1" />
-            Present
-          </Badge>
-        )
+        return <Badge className="bg-green-100 text-green-800">Present</Badge>
       case "ABSENT":
-        return (
-          <Badge className="bg-red-100 text-red-800">
-            <XCircle className="h-3 w-3 mr-1" />
-            Absent
-          </Badge>
-        )
+        return <Badge className="bg-red-100 text-red-800">Absent</Badge>
       case "LATE":
-        return (
-          <Badge className="bg-yellow-100 text-yellow-800">
-            <Clock className="h-3 w-3 mr-1" />
-            Late
-          </Badge>
-        )
+        return <Badge className="bg-yellow-100 text-yellow-800">Late</Badge>
       default:
         return <Badge variant="secondary">{status}</Badge>
     }
   }
-
-  const filteredAttendance = attendance.filter((record) => {
-    const matchesSearch = record.emp_name.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesStatus = statusFilter === "all" || record.in_status === statusFilter
-    return matchesSearch && matchesStatus
-  })
 
   if (loading) {
     return (
@@ -152,15 +136,13 @@ export default function AttendancePage() {
     )
   }
 
-  const presentCount = attendance.filter((a) => a.in_status === "PRESENT").length
-  const absentCount = attendance.filter((a) => a.in_status === "ABSENT").length
-  const lateCount = attendance.filter((a) => a.in_status === "LATE").length
-
   return (
     <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Attendance</h1>
-        <p className="text-gray-600 mt-2">Monitor employee attendance and manage records</p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Attendance</h1>
+          <p className="text-gray-600 mt-2">Manage employee attendance records</p>
+        </div>
       </div>
 
       {error && (
@@ -175,74 +157,26 @@ export default function AttendancePage() {
         </Alert>
       )}
 
-      {/* Attendance Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Total Records</p>
-                <p className="text-2xl font-bold text-gray-900">{attendance.length}</p>
-              </div>
-              <Clock className="h-8 w-8 text-blue-600" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Present</p>
-                <p className="text-2xl font-bold text-green-600">{presentCount}</p>
-              </div>
-              <CheckCircle className="h-8 w-8 text-green-600" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Absent</p>
-                <p className="text-2xl font-bold text-red-600">{absentCount}</p>
-              </div>
-              <XCircle className="h-8 w-8 text-red-600" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Late</p>
-                <p className="text-2xl font-bold text-yellow-600">{lateCount}</p>
-              </div>
-              <Clock className="h-8 w-8 text-yellow-600" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
       <Card>
         <CardHeader>
           <CardTitle>Attendance Records</CardTitle>
-          <CardDescription>Employee attendance tracking and management</CardDescription>
+          <CardDescription>Total records: {attendance.length}</CardDescription>
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
               <Search className="h-4 w-4 text-gray-400" />
               <Input
-                placeholder="Search employees..."
+                placeholder="Search by employee name..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="max-w-sm"
               />
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-40">
-                <SelectValue />
+            <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as any)}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="all">All Statuses</SelectItem>
                 <SelectItem value="PRESENT">Present</SelectItem>
                 <SelectItem value="ABSENT">Absent</SelectItem>
                 <SelectItem value="LATE">Late</SelectItem>
@@ -254,56 +188,40 @@ export default function AttendancePage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Employee</TableHead>
+                <TableHead>Employee Name</TableHead>
                 <TableHead>Date</TableHead>
                 <TableHead>In Time</TableHead>
                 <TableHead>Out Time</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Location</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredAttendance.map((record) => (
                 <TableRow key={record.attendance_id}>
-                  <TableCell className="font-medium">
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4 text-gray-400" />
-                      {record.emp_name}
-                    </div>
-                  </TableCell>
+                  <TableCell className="font-medium">{record.emp_name || "Unknown"}</TableCell>
                   <TableCell>{new Date(record.attendance_date).toLocaleDateString()}</TableCell>
-                  <TableCell>{record.in_time}</TableCell>
+                  <TableCell>{record.in_time || "-"}</TableCell>
                   <TableCell>{record.out_time || "-"}</TableCell>
                   <TableCell>{getStatusBadge(record.in_status)}</TableCell>
-                  <TableCell>{record.in_location}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      {record.in_status === "PRESENT" && (
-                        <>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleRejectAttendance(record.attendance_id, "LATE")}
-                            className="text-yellow-600 border-yellow-600 hover:bg-yellow-50"
-                          >
-                            Mark Late
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleRejectAttendance(record.attendance_id, "ABSENT")}
-                            className="text-red-600 border-red-600 hover:bg-red-50"
-                          >
-                            Mark Absent
-                          </Button>
-                        </>
-                      )}
+                      <Select
+                        onValueChange={(value) => handleRejectAttendance(record.attendance_id, value as "ABSENT" | "LATE")}
+                      >
+                        <SelectTrigger className="w-[120px]">
+                          <SelectValue placeholder="Update Status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="ABSENT">Mark Absent</SelectItem>
+                          <SelectItem value="LATE">Mark Late</SelectItem>
+                        </SelectContent>
+                      </Select>
                       <Button
-                        size="sm"
                         variant="outline"
+                        size="sm"
+                        className="text-red-600 hover:text-red-700 bg-transparent"
                         onClick={() => handleDeleteAttendance(record.attendance_id)}
-                        className="text-red-600 hover:text-red-700"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>

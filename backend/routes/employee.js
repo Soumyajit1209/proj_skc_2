@@ -18,11 +18,13 @@ const {
   getAttendanceSummary,
   fetchEmployeeData,
   updateEmployeeDetails,
-  changeEmployeePassword
+  changeEmployeePassword,
+  getProducts
 } = require('../controllers/employee');
 
 router.post('/login', login);
 router.post('/localities', authenticateEmployee, getLocalities);
+router.post('/avalable_products', authenticateEmployee, getProducts);
 router.post('/all_customers', authenticateEmployee, getCustomers);
 router.post('/create_customers', authenticateEmployee, createCustomer);
 router.put('/update_customers/:id', authenticateEmployee, updateCustomer);

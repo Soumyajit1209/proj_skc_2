@@ -36,6 +36,48 @@ const login = async (req, res) => {
     }
 };
 
+const changeAdminPassword = async (req, res) => {
+  const { old_password, new_password } = req.body;
+  const { id, company_id } = req.user;
+
+  // Input validation
+  if (!old_password || !new_password) {
+    return res.status(400).json({ error: 'Old and new passwords are required' });
+  }
+
+  if (new_password.length < 6) {
+    return res.status(400).json({ error: 'New password must be at least 6 characters long' });
+  }
+
+  try {
+    const connection = await getDbConnection();
+    
+    // Verify old password
+    const [rows] = await connection.execute(
+      'SELECT * FROM admin WHERE id = ? AND password = ? AND company_id = ?',
+      [id, old_password, company_id]
+    );
+
+    if (rows.length === 0) {
+      return res.status(401).json({ error: 'Invalid old password' });
+    }
+
+    // Update password
+    const [result] = await connection.execute(
+      'UPDATE admin SET password = ? WHERE id = ? AND company_id = ?',
+      [new_password, id, company_id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(500).json({ error: 'Failed to update password' });
+    }
+
+    res.json({ message: 'Password updated successfully' });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error', details: error.message });
+  }
+};
+
 const createEmployee = [
   upload.single('profile_picture'),
   async (req, res) => {
@@ -133,19 +175,7 @@ const deleteEmployee = async (req, res) => {
   }
 };
 
-// const createLocality = async (req, res) => {
-//   const { locality_name } = req.body;
-//   try {
-//     const connection = await getDbConnection();
-//     const [result] = await connection.execute(
-//       'INSERT INTO locality_master (company_id, locality_name) VALUES (?, ?)',
-//       [req.user.company_id, locality_name]
-//     );
-//     res.json({ locality_id: result.insertId, message: 'Locality created' });
-//   } catch (error) {
-//     res.status(500).json({ error: 'Server error' });
-//   }
-// };
+
 
 const getLocalities = async (req, res) => {
     try {
@@ -157,40 +187,6 @@ const getLocalities = async (req, res) => {
     }
 };
 
-// // Updated getOrders to match frontend Order interface
-// const getOrders = async (req, res) => {
-//   try {
-//     const connection = await getDbConnection();
-//     const [rows] = await connection.execute(
-//       `SELECT 
-//         s.order_id,
-//         s.order_date,
-//         c.customer_name,
-//         s.order_total_value,
-//         s.order_status,
-//         s.payment_status,
-//         s.created_at
-//       FROM sales_order s
-//       JOIN customer_master c ON s.customer_id = c.customer_id
-//       WHERE s.company_id = ?`,
-//       [req.user.company_id]
-//     );
-//     // Format data to ensure compatibility with frontend
-//     const formattedOrders = rows.map(order => ({
-//       order_id: order.order_id,
-//       order_date: order.order_date,
-//       customer_name: order.customer_name,
-//       order_total_value: order.order_total_value.toString(), // Convert to string for frontend
-//       order_status: order.order_status,
-//       payment_status: order.payment_status,
-//       created_at: order.created_at
-//     }));
-//     res.json(formattedOrders);
-//   } catch (error) {
-//     res.status(500).json({ error: 'Server error', details: error.message });
-//   }
-// };
-// Get all customers
 const getCustomers = async (req, res) => {
     try {
         const connection = await getDbConnection();
@@ -343,49 +339,63 @@ const createLocality = async (req, res) => {
 
 // Update a locality
 const updateLocality = async (req, res) => {
-    const { locality_name } = req.body;
-    try {
-        if (!locality_name) {
-            return res.status(400).json({ error: 'locality_name is required' });
-        }
-
-        const connection = await getDbConnection();
-        const [result] = await connection.execute(
-            'UPDATE locality_master SET locality_name = ?, updated_at = CURRENT_TIMESTAMP, updated_by = ? WHERE locality_id = ? AND company_id = ?',
-            [locality_name, req.user.id, req.params.id, req.user.company_id]
-        );
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ error: 'Locality not found' });
-        }
-        res.json({
-            company_id: req.user.company_id,
-            admin_id: req.user.id,
-            data: { message: 'Locality updated successfully' }
-        });
-    } catch (error) {
-        res.status(500).json({ error: 'Server error', details: error.message });
+  const { locality_name } = req.body;
+  try {
+    if (!locality_name) {
+      return res.status(400).json({ error: 'locality_name is required' });
     }
+
+    const connection = await getDbConnection();
+    const [result] = await connection.execute(
+      'UPDATE locality_master SET locality_name = ? WHERE locality_id = ? AND company_id = ?',
+      [locality_name, req.params.id, req.user.company_id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Locality not found or no changes made' });
+    }
+
+    res.json({
+      company_id: req.user.company_id,
+      admin_id: req.user.id,
+      data: { message: 'Locality updated successfully' }
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error', details: error.message });
+  }
 };
 
 // Delete a locality
 const deleteLocality = async (req, res) => {
-    try {
-        const connection = await getDbConnection();
-        const [result] = await connection.execute(
-            'DELETE FROM locality_master WHERE locality_id = ? AND company_id = ?',
-            [req.params.id, req.user.company_id]
-        );
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ error: 'Locality not found' });
-        }
-        res.json({
-            company_id: req.user.company_id,
-            admin_id: req.user.id,
-            data: { message: 'Locality deleted successfully' }
-        });
-    } catch (error) {
-        res.status(500).json({ error: 'Server error', details: error.message });
+  try {
+    const connection = await getDbConnection();
+
+    // Check if locality is referenced in customer_master
+    const [customers] = await connection.execute(
+      'SELECT COUNT(*) as count FROM customer_master WHERE locality_id = ? AND company_id = ?',
+      [req.params.id, req.user.company_id]
+    );
+    if (customers[0].count > 0) {
+      return res.status(400).json({ error: 'Cannot delete locality as it is referenced by customers' });
     }
+
+    const [result] = await connection.execute(
+      'DELETE FROM locality_master WHERE locality_id = ? AND company_id = ?',
+      [req.params.id, req.user.company_id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Locality not found' });
+    }
+
+    res.json({
+      company_id: req.user.company_id,
+      admin_id: req.user.id,
+      data: { message: 'Locality deleted successfully' }
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error', details: error.message });
+  }
 };
 
 // Get all orders
@@ -665,7 +675,8 @@ module.exports = {
     updateCustomer,
     deleteCustomer,
     getOrders,
-    getOrderDetails
+    getOrderDetails,
+    changeAdminPassword
 
 
 };

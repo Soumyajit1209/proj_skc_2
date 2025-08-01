@@ -47,7 +47,7 @@ export default function LocalitiesPage() {
   const fetchLocalities = async () => {
     try {
       const token = localStorage.getItem("token")
-      const response = await fetch("http://localhost:3001/api/admin/localities", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/localities`, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -74,7 +74,7 @@ export default function LocalitiesPage() {
 
     try {
       const token = localStorage.getItem("token")
-      const response = await fetch("http://localhost:3001/api/admin/localities", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/localities`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -106,7 +106,7 @@ export default function LocalitiesPage() {
 
     try {
       const token = localStorage.getItem("token")
-      const response = await fetch(`http://localhost:3001/api/admin/localities/${selectedLocality.locality_id}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/localities/${selectedLocality.locality_id}`, {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -134,7 +134,7 @@ export default function LocalitiesPage() {
 
     try {
       const token = localStorage.getItem("token")
-      const response = await fetch(`http://localhost:3001/api/admin/localities/${localityId}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/localities/${localityId}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -185,10 +185,10 @@ export default function LocalitiesPage() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-3 space-y-4">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Localities</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Localities</h1>
           <p className="text-gray-600 mt-2">Manage service areas and localities</p>
         </div>
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>

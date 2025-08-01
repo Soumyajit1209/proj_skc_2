@@ -49,7 +49,7 @@ export default function OrdersPage() {
         return;
       }
 
-      const response = await fetch("http://localhost:3001/api/admin/orders", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/orders`, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -91,7 +91,7 @@ export default function OrdersPage() {
         return;
       }
 
-      const response = await fetch(`http://localhost:3001/api/admin/orders/${orderId}/details`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/orders/${orderId}/details`, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -184,9 +184,9 @@ export default function OrdersPage() {
   const totalValue = filteredOrders.reduce((sum, order) => sum + Number.parseFloat(order.order_total_value), 0);
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-3 space-y-4">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Orders</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Orders</h1>
         <p className="text-gray-600 mt-2">Track and manage customer orders</p>
       </div>
 

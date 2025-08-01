@@ -25,7 +25,7 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      const response = await fetch(`http://localhost:3001/api/${role}/login`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/${role}/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

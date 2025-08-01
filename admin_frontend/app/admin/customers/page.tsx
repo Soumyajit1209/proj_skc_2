@@ -64,7 +64,7 @@ export default function CustomersPage() {
   const fetchCustomers = async () => {
     try {
       const token = localStorage.getItem("token")
-      const response = await fetch("http://localhost:3001/api/admin/customers", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/customers`, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -87,7 +87,7 @@ export default function CustomersPage() {
   const fetchLocalities = async () => {
     try {
       const token = localStorage.getItem("token")
-      const response = await fetch("http://localhost:3001/api/admin/localities", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/localities`, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -110,7 +110,7 @@ export default function CustomersPage() {
 
     try {
       const token = localStorage.getItem("token")
-      const response = await fetch("http://localhost:3001/api/admin/customers", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/customers`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -145,7 +145,7 @@ export default function CustomersPage() {
 
     try {
       const token = localStorage.getItem("token")
-      const response = await fetch(`http://localhost:3001/api/admin/customers/${selectedCustomer.customer_id}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/customers/${selectedCustomer.customer_id}`, {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -176,7 +176,7 @@ export default function CustomersPage() {
 
     try {
       const token = localStorage.getItem("token")
-      const response = await fetch(`http://localhost:3001/api/admin/customers/${customerId}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/customers/${customerId}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -258,10 +258,10 @@ export default function CustomersPage() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-3 space-y-4">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Customers</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Customers</h1>
           <p className="text-gray-600 mt-2">Manage your customer database</p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

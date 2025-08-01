@@ -52,7 +52,7 @@ export default function ProductsPage() {
   const fetchProducts = async () => {
     try {
       const token = localStorage.getItem("token")
-      const response = await fetch("http://localhost:3001/api/admin/products", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/products`, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -79,7 +79,7 @@ export default function ProductsPage() {
 
     try {
       const token = localStorage.getItem("token")
-      const response = await fetch("http://localhost:3001/api/admin/products", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/products`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -114,7 +114,7 @@ export default function ProductsPage() {
 
     try {
       const token = localStorage.getItem("token")
-      const response = await fetch(`http://localhost:3001/api/admin/products/${selectedProduct.product_id}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/products/${selectedProduct.product_id}`, {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -145,7 +145,7 @@ export default function ProductsPage() {
 
     try {
       const token = localStorage.getItem("token")
-      const response = await fetch(`http://localhost:3001/api/admin/products/${productId}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/products/${productId}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -207,10 +207,10 @@ export default function ProductsPage() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-3 space-y-4">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Products</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Products</h1>
           <p className="text-gray-600 mt-2">Manage your product catalog</p>
         </div>
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>

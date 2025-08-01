@@ -24,7 +24,7 @@ export default function SuperAdminDashboard() {
   const fetchCompanies = async () => {
     try {
       const token = localStorage.getItem("token")
-      const response = await fetch("http://localhost:3001/api/superadmin/companies", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/superadmin/companies`, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",

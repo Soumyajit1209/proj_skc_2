@@ -30,7 +30,7 @@ export default function PaymentsPage() {
   const fetchPayments = async () => {
     try {
       const token = localStorage.getItem("token")
-      const response = await fetch("http://localhost:3001/api/admin/payments", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/payments`, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -61,7 +61,7 @@ export default function PaymentsPage() {
   const handlePaymentAction = async (paymentId: number, status: "APPROVED" | "REJECTED") => {
     try {
       const token = localStorage.getItem("token")
-      const response = await fetch(`http://localhost:3001/api/admin/payments/${paymentId}/approve`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/payments/${paymentId}/approve`, {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${token}`,

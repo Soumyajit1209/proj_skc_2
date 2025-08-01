@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Plus, Edit, Trash2, Search, User } from "lucide-react"
+import { Plus, Edit, Trash2, Search, User, Eye } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
 interface Employee {
@@ -27,12 +27,14 @@ interface Employee {
   emp_name: string
   emp_username: string
   emp_phone: string
+  emp_password?: number | string
   emp_email: string
   emp_address: string
   emp_dob: string
   emp_hiring_date: string
   status: "ACTIVE" | "INACTIVE" | "TERMINATED"
   created_at: string
+  profile_picture?: string | null
 }
 
 export default function EmployeesPage() {
@@ -42,7 +44,9 @@ export default function EmployeesPage() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null)
-  const [formData, setFormData] = useState({
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false)
+  const [viewEmployee, setViewEmployee] = useState<Employee | null>(null)
+  const [formData, setFormData] = useState<any>({
     emp_name: "",
     emp_username: "",
     emp_password: "",
@@ -52,8 +56,11 @@ export default function EmployeesPage() {
     emp_dob: "",
     emp_hiring_date: "",
     status: "ACTIVE" as "ACTIVE" | "INACTIVE" | "TERMINATED",
+    profile_picture: null,
   })
   const { toast } = useToast()
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null)
+  const [editPhotoPreview, setEditPhotoPreview] = useState<string | null>(null)
 
   useEffect(() => {
     fetchEmployees()
@@ -62,7 +69,7 @@ export default function EmployeesPage() {
   const fetchEmployees = async () => {
     try {
       const token = localStorage.getItem("token")
-      const response = await fetch("http://localhost:3001/api/admin/employees", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/employees`, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -95,13 +102,27 @@ export default function EmployeesPage() {
 
     try {
       const token = localStorage.getItem("token")
-      const response = await fetch("http://localhost:3001/api/admin/employees", {
+      const formDataToSend = new FormData()
+      formDataToSend.append("emp_name", formData.emp_name)
+      formDataToSend.append("emp_username", formData.emp_username)
+      formDataToSend.append("emp_password", formData.emp_password)
+      formDataToSend.append("emp_phone", formData.emp_phone)
+      formDataToSend.append("emp_email", formData.emp_email)
+      formDataToSend.append("emp_address", formData.emp_address)
+      formDataToSend.append("emp_dob", formData.emp_dob)
+      formDataToSend.append("emp_hiring_date", formData.emp_hiring_date)
+      formDataToSend.append("status", formData.status)
+
+      if (formData.profile_picture) {
+        formDataToSend.append("profile_picture", formData.profile_picture)
+      }
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/employees`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: formDataToSend,
       })
 
       if (response.ok) {
@@ -136,13 +157,29 @@ export default function EmployeesPage() {
 
     try {
       const token = localStorage.getItem("token")
-      const response = await fetch(`http://localhost:3001/api/admin/employees/${selectedEmployee.emp_id}`, {
+      const formDataToSend = new FormData()
+      formDataToSend.append("emp_name", formData.emp_name)
+      formDataToSend.append("emp_username", formData.emp_username)
+      if (formData.emp_password) {
+        formDataToSend.append("emp_password", formData.emp_password)
+      }
+      formDataToSend.append("emp_phone", formData.emp_phone)
+      formDataToSend.append("emp_email", formData.emp_email)
+      formDataToSend.append("emp_address", formData.emp_address)
+      formDataToSend.append("emp_dob", formData.emp_dob)
+      formDataToSend.append("emp_hiring_date", formData.emp_hiring_date)
+      formDataToSend.append("status", formData.status)
+
+      if (formData.profile_picture) {
+        formDataToSend.append("profile_picture", formData.profile_picture)
+      }
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/employees/${selectedEmployee.emp_id}`, {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: formDataToSend,
       })
 
       if (response.ok) {
@@ -176,7 +213,7 @@ export default function EmployeesPage() {
 
     try {
       const token = localStorage.getItem("token")
-      const response = await fetch(`http://localhost:3001/api/admin/employees/${empId}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/employees/${empId}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -219,8 +256,11 @@ export default function EmployeesPage() {
       emp_dob: "",
       emp_hiring_date: "",
       status: "ACTIVE",
+      profile_picture: null,
     })
     setSelectedEmployee(null)
+    setPhotoPreview(null)
+    setEditPhotoPreview(null)
   }
 
   const openEditDialog = (employee: Employee) => {
@@ -235,8 +275,20 @@ export default function EmployeesPage() {
       emp_dob: employee.emp_dob ? employee.emp_dob.split("T")[0] : "",
       emp_hiring_date: employee.emp_hiring_date ? employee.emp_hiring_date.split("T")[0] : "",
       status: employee.status,
+      profile_picture: null,
     })
+    // Set existing photo preview for edit
+    if (employee.profile_picture) {
+      setEditPhotoPreview(`${process.env.NEXT_PUBLIC_API_URL}${employee.profile_picture}`)
+    } else {
+      setEditPhotoPreview(null)
+    }
     setIsEditDialogOpen(true)
+  }
+
+  const openViewDialog = (employee: Employee) => {
+    setViewEmployee(employee)
+    setIsViewDialogOpen(true)
   }
 
   const filteredEmployees = employees.filter(
@@ -271,10 +323,10 @@ export default function EmployeesPage() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-3 space-y-4">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Employees</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Employees</h1>
           <p className="text-gray-600 mt-2">Manage your company employees</p>
         </div>
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
@@ -289,7 +341,7 @@ export default function EmployeesPage() {
               <DialogTitle>Add New Employee</DialogTitle>
               <DialogDescription>Fill in the employee details below</DialogDescription>
             </DialogHeader>
-            <form onSubmit={handleAddEmployee} className="space-y-4">
+            <form onSubmit={handleAddEmployee} className="space-y-4" encType="multipart/form-data">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="emp_name">Full Name</Label>
@@ -367,6 +419,38 @@ export default function EmployeesPage() {
                   />
                 </div>
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="profile_picture">Profile Picture</Label>
+                <Input
+                  id="profile_picture"
+                  type="file"
+                  accept="img/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file) {
+                      setFormData({ ...formData, profile_picture: file })
+                      // Create preview URL
+                      const reader = new FileReader()
+                      reader.onload = (e) => {
+                        setPhotoPreview(e.target?.result as string)
+                      }
+                      reader.readAsDataURL(file)
+                    }
+                  }}
+                />
+                {photoPreview && (
+                  <div className="mt-2">
+                    <Label className="text-sm font-medium text-gray-600">Preview</Label>
+                    <div className="relative w-24 h-24 rounded-full overflow-hidden bg-gray-200 border-2 border-gray-300">
+                      <img
+                        src={photoPreview || "/placeholder.svg"}
+                        alt="Profile Preview"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>
                   Cancel
@@ -423,6 +507,9 @@ export default function EmployeesPage() {
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
+                      <Button variant="outline" size="sm" onClick={() => openViewDialog(employee)}>
+                        <Eye className="h-4 w-4" />
+                      </Button>
                       <Button variant="outline" size="sm" onClick={() => openEditDialog(employee)}>
                         <Edit className="h-4 w-4" />
                       </Button>
@@ -450,7 +537,7 @@ export default function EmployeesPage() {
             <DialogTitle>Edit Employee</DialogTitle>
             <DialogDescription>Update employee information</DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleEditEmployee} className="space-y-4">
+          <form onSubmit={handleEditEmployee} className="space-y-4" encType="multipart/form-data">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="edit_emp_name">Full Name</Label>
@@ -545,6 +632,38 @@ export default function EmployeesPage() {
                 </Select>
               </div>
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="profile_picture">Profile Picture</Label>
+              <Input
+                id="profile_picture"
+                type="file"
+                accept="img/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  if (file) {
+                    setFormData({ ...formData, profile_picture: file })
+                    // Create preview URL
+                    const reader = new FileReader()
+                    reader.onload = (e) => {
+                      setEditPhotoPreview(e.target?.result as string)
+                    }
+                    reader.readAsDataURL(file)
+                  }
+                }}
+              />
+              {editPhotoPreview && (
+                <div className="mt-2">
+                  <Label className="text-sm font-medium text-gray-600">Current/Preview</Label>
+                  <div className="relative w-24 h-24 rounded-full overflow-hidden bg-gray-200 border-2 border-gray-300">
+                    <img
+                      src={editPhotoPreview || "/placeholder.svg"}
+                      alt="Profile Preview"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
                 Cancel
@@ -552,6 +671,100 @@ export default function EmployeesPage() {
               <Button type="submit">Update Employee</Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+      {/* View Employee Dialog */}
+      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Employee Details</DialogTitle>
+            <DialogDescription>Complete employee information</DialogDescription>
+          </DialogHeader>
+          {viewEmployee && (
+            <div className="space-y-6">
+              <div className="flex items-center space-x-4">
+                <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
+                  {viewEmployee.profile_picture ? (
+                    <img
+                      src={`${process.env.NEXT_PUBLIC_API_URL}${viewEmployee.profile_picture}`}
+                      alt="Profile"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <User className="h-12 w-12 text-gray-400" />
+                  )}
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold">{viewEmployee.emp_name}</h3>
+                  <p className="text-gray-600">@{viewEmployee.emp_username}</p>
+                  <Badge
+                    className={
+                      viewEmployee.status === "ACTIVE"
+                        ? "bg-green-100 text-green-800"
+                        : viewEmployee.status === "INACTIVE"
+                          ? "bg-yellow-100 text-yellow-800"
+                          : "bg-red-100 text-red-800"
+                    }
+                  >
+                    {viewEmployee.status}
+                  </Badge>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-medium text-gray-600">Employee ID</Label>
+                  <p className="text-sm">{viewEmployee.emp_id}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-600">Username</Label>
+                  <p className="text-sm">{viewEmployee.emp_username}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-600">Password</Label>
+                  <p className="text-sm font-mono bg-gray-100 px-2 py-1 rounded">
+                    {viewEmployee.emp_password || "Not set"}
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-600">Phone</Label>
+                  <p className="text-sm">{viewEmployee.emp_phone || "Not provided"}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-600">Email</Label>
+                  <p className="text-sm">{viewEmployee.emp_email || "Not provided"}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-600">Date of Birth</Label>
+                  <p className="text-sm">
+                    {viewEmployee.emp_dob ? new Date(viewEmployee.emp_dob).toLocaleDateString() : "Not provided"}
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-600">Hiring Date</Label>
+                  <p className="text-sm">
+                    {viewEmployee.emp_hiring_date
+                      ? new Date(viewEmployee.emp_hiring_date).toLocaleDateString()
+                      : "Not provided"}
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-600">Created At</Label>
+                  <p className="text-sm">{new Date(viewEmployee.created_at).toLocaleString()}</p>
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-sm font-medium text-gray-600">Address</Label>
+                <p className="text-sm">{viewEmployee.emp_address || "Not provided"}</p>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsViewDialogOpen(false)}>
+              Close
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

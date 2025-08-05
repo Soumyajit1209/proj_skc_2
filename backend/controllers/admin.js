@@ -7,7 +7,7 @@ const path = require('path');
 
 // Multer configuration for profile picture uploads
 const storage = multer.diskStorage({
-  destination: './Uploads/profile_pictures',
+  destination: './uploads/profile_pictures',
   filename: (req, file, cb) => {
     cb(null, `${Date.now()}-profile-${req.user.id}${path.extname(file.originalname)}`);
   }
@@ -15,25 +15,70 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 const login = async (req, res) => {
-    const { username, password, role } = req.body;
-    try {
-        const connection = await getDbConnection();
-        const [rows] = await connection.execute(
-            'SELECT * FROM admin WHERE username = ? AND password   = ?',
-            [username, password]
-        );
-        if (rows.length === 0) {
-            return res.status(401).json({ error: 'Invalid credentials' });
-        }
-        const token = jwt.sign(
-            { id: rows[0].id, company_id: rows[0].company_id, role: 'admin' },
-            process.env.JWT_SECRET || 'your_jwt_secret',
-            { expiresIn: '4h' }
-        );
-        res.json({ token , role });
-    } catch (error) {
-        res.status(500).json({ error: 'Server error' });
+  const { username, password, role } = req.body;
+  try {
+    const connection = await getDbConnection();
+    
+    const [rows] = await connection.execute(
+      `SELECT a.*, c.status AS company_status 
+       FROM admin a 
+       JOIN company_master c ON a.company_id = c.company_id 
+       WHERE a.username = ? AND a.password = ?`,
+      [username, password]
+    );
+
+    if (rows.length === 0) {
+      return res.status(401).json({ error: 'Invalid credentials' });
     }
+
+    if (rows[0].company_status === 'INACTIVE') {
+      return res.status(403).json({ error: 'Company is inactive. Contact superadmin for assistance.' });
+    }
+
+    const token = jwt.sign(
+      { id: rows[0].id, company_id: rows[0].company_id, role: 'admin' },
+      process.env.JWT_SECRET || 'your_jwt_secret',
+      { expiresIn: '4h' }
+    );
+
+    // Store token in sessions table
+    const expiresAt = new Date(Date.now() + 4 * 60 * 60 * 1000); // 4 hours from now
+    await connection.execute(
+      'INSERT INTO sessions (user_id, company_id, token, role, expires_at) VALUES (?, ?, ?, ?, ?)',
+      [rows[0].id, rows[0].company_id, token, 'admin', expiresAt]
+    );
+
+    res.json({ token, role });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error', details: error.message });
+  }
+};
+
+const checkToken = async (req, res) => {
+  try {
+    const connection = await getDbConnection();
+    const [company] = await connection.execute(
+      'SELECT status FROM company_master WHERE company_id = ?',
+      [req.user.company_id]
+    );
+
+    if (company.length === 0 || company[0].status === 'INACTIVE') {
+      return res.status(403).json({ error: 'Company is inactive. Please log out.' });
+    }
+
+    const [blacklist] = await connection.execute(
+      'SELECT * FROM token_blacklist WHERE token = ?',
+      [req.headers['authorization'].split(' ')[1]]
+    );
+
+    if (blacklist.length > 0) {
+      return res.status(401).json({ error: 'Token is invalid. Please log out.' });
+    }
+
+    res.json({ message: 'Token is valid' });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error', details: error.message });
+  }
 };
 
 const changeAdminPassword = async (req, res) => {
@@ -83,7 +128,7 @@ const createEmployee = [
   async (req, res) => {
     const { emp_name, emp_username, emp_password, emp_phone, emp_email, emp_address, emp_dob, emp_hiring_date } = req.body;
     try {
-      const profilePicturePath = req.file ? `/Uploads/${req.file.filename}` : null;
+      const profilePicturePath = req.file ? `/uploads/${req.file.filename}` : null;
       const connection = await getDbConnection();
       const [result] = await connection.execute(
         'INSERT INTO employee_master (company_id, emp_name, emp_username, emp_password, profile_picture, emp_phone, emp_email, emp_address, emp_dob, emp_hiring_date, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
@@ -676,7 +721,7 @@ module.exports = {
     deleteCustomer,
     getOrders,
     getOrderDetails,
-    changeAdminPassword
-
+    changeAdminPassword,
+    checkToken
 
 };

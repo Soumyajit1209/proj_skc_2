@@ -17,9 +17,10 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { BarChart3, Building2, Menu, LogOut, Shield, Crown, KeyRound } from "lucide-react"
 import Link from "next/link"
+import { useTokenValidation } from "@/hooks/useTokenValidation"
 
 const navigation = [
-  { name: "Dashboard", href: "/superadmin/home", icon: BarChart3, color: "text-purple-600" },
+  { name: "Dashboard", href: "/superadmin/dashboard", icon: BarChart3, color: "text-purple-600" },
   { name: "Companies", href: "/superadmin/companies", icon: Building2, color: "text-indigo-600" },
 ]
 
@@ -32,6 +33,9 @@ export default function SuperAdminLayout({
   const pathname = usePathname()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [adminName, setAdminName] = useState("Super Admin")
+
+  // Initialize token validation
+  useTokenValidation({ role: "superadmin", intervalMs: 5000 })
 
   useEffect(() => {
     const token = localStorage.getItem("token")

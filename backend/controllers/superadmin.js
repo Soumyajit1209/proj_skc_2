@@ -1,6 +1,7 @@
 const { getDbConnection } = require('../config/db');
 const jwt = require('jsonwebtoken');
 
+
 const login = async (req, res) => {
   const { username, password, role } = req.body;
   try {
@@ -9,25 +10,72 @@ const login = async (req, res) => {
       'SELECT * FROM superadmin WHERE username = ? AND password = ?',
       [username, password]
     );
+
     if (rows.length === 0) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
+
     const token = jwt.sign(
       { id: rows[0].superadmin_id, role: 'superadmin' },
       process.env.JWT_SECRET || 'your_jwt_secret',
       { expiresIn: '1h' }
     );
+
+    // Store token in sessions table with company_id as NULL
+    const expiresAt = new Date(Date.now() + 1 * 60 * 60 * 1000); // 1 hour from now
+    await connection.execute(
+      'INSERT INTO sessions (user_id, company_id, token, role, expires_at) VALUES (?, ?, ?, ?, ?)',
+      [rows[0].superadmin_id, null, token, 'superadmin', expiresAt]
+    );
+
     res.json({ token, role });
   } catch (error) {
+    console.error('Superadmin login error:', error);
     res.status(500).json({ error: 'Server error', details: error.message });
   }
 };
+
+const checkToken = async (req, res) => {
+  try {
+    const connection = await getDbConnection();
+    const token = req.headers['authorization']?.split(' ')[1];
+
+    if (!token) {
+      return res.status(401).json({ error: 'No token provided' });
+    }
+
+    // Check if token is blacklisted
+    const [blacklist] = await connection.execute(
+      'SELECT * FROM token_blacklist WHERE token = ?',
+      [token]
+    );
+
+    if (blacklist.length > 0) {
+      return res.status(401).json({ error: 'Token is invalid or blacklisted' });
+    }
+
+    // Verify token is in sessions table and not expired
+    const [session] = await connection.execute(
+      'SELECT * FROM sessions WHERE token = ? AND role = ? AND expires_at > NOW()',
+      [token, 'superadmin']
+    );
+
+    if (session.length === 0) {
+      return res.status(401).json({ error: 'Token is invalid or expired' });
+    }
+
+    res.json({ message: 'Token is valid' });
+  } catch (error) {
+    console.error('Superadmin checkToken error:', error);
+    res.status(500).json({ error: 'Server error', details: error.message });
+  }
+};
+
 
 const changeSuperadminPassword = async (req, res) => {
   const { old_password, new_password } = req.body;
   const { id } = req.user;
 
-  // Input validation
   if (!old_password || !new_password) {
     return res.status(400).json({ error: 'Old and new passwords are required' });
   }
@@ -39,7 +87,6 @@ const changeSuperadminPassword = async (req, res) => {
   try {
     const connection = await getDbConnection();
     
-    // Verify old password
     const [rows] = await connection.execute(
       'SELECT * FROM superadmin WHERE superadmin_id = ? AND password = ?',
       [id, old_password]
@@ -47,6 +94,23 @@ const changeSuperadminPassword = async (req, res) => {
 
     if (rows.length === 0) {
       return res.status(401).json({ error: 'Invalid old password' });
+    }
+
+    // Blacklist existing tokens
+    const [sessions] = await connection.execute(
+      'SELECT token FROM sessions WHERE user_id = ? AND role = ? AND expires_at > NOW()',
+      [id, 'superadmin']
+    );
+
+    for (const session of sessions) {
+      await connection.execute(
+        'INSERT INTO token_blacklist (token, company_id) VALUES (?, ?)',
+        [session.token, null] // Use NULL for company_id
+      );
+      await connection.execute(
+        'DELETE FROM sessions WHERE token = ?',
+        [session.token]
+      );
     }
 
     // Update password
@@ -61,6 +125,7 @@ const changeSuperadminPassword = async (req, res) => {
 
     res.json({ message: 'Password updated successfully' });
   } catch (error) {
+    console.error('Superadmin change password error:', error);
     res.status(500).json({ error: 'Server error', details: error.message });
   }
 };
@@ -244,16 +309,50 @@ const updateCompany = async (req, res) => {
   const { company_name, company_email, company_phone, company_address, status } = req.body;
   try {
     const connection = await getDbConnection();
-    await connection.execute(
+    
+    const [currentCompany] = await connection.execute(
+      'SELECT status FROM company_master WHERE company_id = ? AND superadmin_id = ?',
+      [req.params.id, req.user.id]
+    );
+
+    if (currentCompany.length === 0) {
+      return res.status(404).json({ error: 'Company not found' });
+    }
+
+    const [result] = await connection.execute(
       'UPDATE company_master SET company_name = ?, company_email = ?, company_phone_1 = ?, company_address = ?, status = ? WHERE company_id = ? AND superadmin_id = ?',
       [company_name, company_email || null, company_phone || null, company_address || null, status, req.params.id, req.user.id]
     );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Company not found or no changes made' });
+    }
+
+    // If status changed to INACTIVE, blacklist all admin tokens for this company
+    if (status === 'INACTIVE' && currentCompany[0].status !== 'INACTIVE') {
+      const [sessions] = await connection.execute(
+        'SELECT token FROM sessions WHERE company_id = ? AND role = ? AND expires_at > NOW()',
+        [req.params.id, 'admin']
+      );
+
+      for (const session of sessions) {
+        await connection.execute(
+          'INSERT INTO token_blacklist (token, company_id) VALUES (?, ?)',
+          [session.token, req.params.id]
+        );
+        await connection.execute(
+          'DELETE FROM sessions WHERE token = ?',
+          [session.token]
+        );
+      }
+    }
+
     res.json({ message: 'Company updated' });
   } catch (error) {
+    console.error('Update company error:', error);
     res.status(500).json({ error: 'Server error', details: error.message });
   }
 };
-
 const deleteCompany = async (req, res) => {
   try {
     const connection = await getDbConnection();
@@ -264,4 +363,4 @@ const deleteCompany = async (req, res) => {
   }
 };
 
-module.exports = { login, createCompany, getCompanies, updateCompany, deleteCompany, changeSuperadminPassword };
+module.exports = { login, createCompany, getCompanies, updateCompany, deleteCompany, changeSuperadminPassword, checkToken };

@@ -48,7 +48,6 @@ export default function AdminDashboard() {
   })
   const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([])
   const [loading, setLoading] = useState(true)
-  
 
   // Conversion rate: 1 USD = 83.5 INR
   const USD_TO_INR = 83.5
@@ -205,46 +204,47 @@ export default function AdminDashboard() {
   const handleAttendanceReportClick = () => {
     router.push("/admin/attendance")
   }
+
   const statCards = [
     {
       title: "Total Revenue",
       value: `₹${stats.totalRevenue.toLocaleString('en-IN')}`,
       icon: Currency,
-      color: "text-teal-400",
-      bgColor: "bg-gradient-to-br from-teal-50 to-teal-100",
-      borderColor: "border-teal-100",
+      color: "text-gray-600",
+      bgColor: "bg-gradient-to-br from-gray-50 to-gray-100",
+      borderColor: "border-gray-200",
       change: `${stats.monthlyGrowth >= 0 ? '+' : ''}${stats.monthlyGrowth}%`,
-      changeColor: stats.monthlyGrowth >= 0 ? "text-teal-400" : "text-rose-400",
+      changeColor: stats.monthlyGrowth >= 0 ? "text-gray-600" : "text-gray-800",
     },
     {
       title: "Total Orders",
       value: stats.totalOrders.toLocaleString('en-IN'),
       icon: ShoppingCart,
-      color: "text-blue-400",
-      bgColor: "bg-gradient-to-br from-blue-50 to-blue-100",
-      borderColor: "border-blue-100",
+      color: "text-gray-600",
+      bgColor: "bg-gradient-to-br from-gray-50 to-gray-100",
+      borderColor: "border-gray-200",
       change: "+8.2%",
-      changeColor: "text-blue-400",
+      changeColor: "text-gray-600",
     },
     {
       title: "Total Customers",
       value: stats.totalCustomers.toLocaleString('en-IN'),
       icon: Users,
-      color: "text-purple-400",
-      bgColor: "bg-gradient-to-br from-purple-50 to-purple-100",
-      borderColor: "border-purple-100",
+      color: "text-gray-600",
+      bgColor: "bg-gradient-to-br from-gray-50 to-gray-100",
+      borderColor: "border-gray-200",
       change: "+15.3%",
-      changeColor: "text-purple-400",
+      changeColor: "text-gray-600",
     },
     {
       title: "Total Employees",
       value: stats.totalEmployees.toLocaleString('en-IN'),
       icon: Users,
-      color: "text-amber-400",
-      bgColor: "bg-gradient-to-br from-amber-50 to-amber-100",
-      borderColor: "border-amber-100",
+      color: "text-gray-600",
+      bgColor: "bg-gradient-to-br from-gray-50 to-gray-100",
+      borderColor: "border-gray-200",
       change: "+2.1%",
-      changeColor: "text-amber-400",
+      changeColor: "text-gray-600",
     },
   ]
 
@@ -253,75 +253,75 @@ export default function AdminDashboard() {
       title: "Pending Payments",
       value: stats.pendingPayments,
       icon: Clock,
-      color: "text-yellow-400",
-      bgColor: "bg-gradient-to-br from-yellow-50 to-yellow-100",
-      borderColor: "border-yellow-100",
+      color: "text-gray-600",
+      bgColor: "bg-gradient-to-br from-gray-50 to-gray-100",
+      borderColor: "border-gray-200",
     },
     {
       title: "Approved Payments",
       value: stats.approvedPayments,
       icon: CheckCircle,
-      color: "text-green-400",
-      bgColor: "bg-gradient-to-br from-green-50 to-green-100",
-      borderColor: "border-green-100",
+      color: "text-gray-600",
+      bgColor: "bg-gradient-to-br from-gray-50 to-gray-100",
+      borderColor: "border-gray-200",
     },
     {
       title: "Rejected Payments",
       value: stats.rejectedPayments,
       icon: XCircle,
-      color: "text-red-400",
-      bgColor: "bg-gradient-to-br from-red-50 to-red-100",
-      borderColor: "border-red-100",
+      color: "text-gray-600",
+      bgColor: "bg-gradient-to-br from-gray-50 to-gray-100",
+      borderColor: "border-gray-200",
     },
     {
       title: "Today's Attendance",
       value: stats.attendanceToday,
       icon: Activity,
-      color: "text-indigo-400",
-      bgColor: "bg-gradient-to-br from-indigo-50 to-indigo-100",
-      borderColor: "border-indigo-100",
+      color: "text-gray-600",
+      bgColor: "bg-gradient-to-br from-gray-50 to-gray-100",
+      borderColor: "border-gray-200",
     },
   ]
 
   const paymentStatusData: PaymentStatusData[] = [
-    { name: "Approved", value: stats.approvedPayments, color: "#6ee7b7" }, // Soft green
-    { name: "Pending", value: stats.pendingPayments, color: "#facc15" }, // Soft yellow
-    { name: "Rejected", value: stats.rejectedPayments, color: "#f87171" }, // Soft red
+    { name: "Approved", value: stats.approvedPayments, color: "#6b7280" }, // Gray
+    { name: "Pending", value: stats.pendingPayments, color: "#9ca3af" }, // Light gray
+    { name: "Rejected", value: stats.rejectedPayments, color: "#4b5563" }, // Dark gray
   ]
 
   const chartConfig = {
     orders: {
       label: "Orders",
-      color: "#60a5fa", // Soft blue
+      color: "#6b7280", // Gray
     },
     revenue: {
       label: "Revenue",
-      color: "#34d399", // Soft green
+      color: "#4b5563", // Dark gray
     },
     customers: {
       label: "Customers",
-      color: "#a78bfa", // Soft purple
+      color: "#9ca3af", // Light gray
     },
   }
 
   if (loading) {
     return (
-      <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
+      <div className="p-6 space-y-6 bg-gray-100 min-h-screen">
         <div className="animate-pulse space-y-6">
-          <div className="h-12 bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 rounded-lg w-1/3"></div>
+          <div className="h-12 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 rounded-lg w-1/3"></div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {[...Array(4)].map((_, i) => (
-              <div key={i} className="h-36 bg-gradient-to-br from-gray-100 via-gray-200 to-gray-100 rounded-lg"></div>
+              <div key={i} className="h-36 bg-gradient-to-br from-gray-200 via-gray-300 to-gray-200 rounded-lg"></div>
             ))}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {[...Array(4)].map((_, i) => (
-              <div key={i} className="h-28 bg-gradient-to-br from-gray-100 via-gray-200 to-gray-100 rounded-lg"></div>
+              <div key={i} className="h-28 bg-gradient-to-br from-gray-200 via-gray-300 to-gray-200 rounded-lg"></div>
             ))}
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {[...Array(2)].map((_, i) => (
-              <div key={i} className="h-80 bg-gradient-to-br from-gray-100 via-gray-200 to-gray-100 rounded-lg"></div>
+              <div key={i} className="h-80 bg-gradient-to-br from-gray-200 via-gray-300 to-gray-200 rounded-lg"></div>
             ))}
           </div>
         </div>
@@ -330,15 +330,14 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
+    <div className="p-4 space-y-6 bg-gray-100 min-h-screen">
       {/* Header */}
       <div className="relative">
-        <div className="absolute -top-2 -left-2 w-4 h-4 bg-teal-300 rounded-full animate-pulse opacity-50"></div>
-        <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-700 via-gray-500 to-gray-700 bg-clip-text text-transparent">
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-800 via-gray-600 to-gray-800 bg-clip-text text-transparent">
           Dashboard
         </h1>
-        <p className="text-gray-400 mt-2 text-lg">Analytics & Business Intelligence</p>
-        <div className="flex items-center gap-2 mt-1 text-sm text-gray-400">
+        <p className="text-gray-500 mt-2 text-lg">Analytics & Business Intelligence</p>
+        <div className="flex items-center gap-2 mt-1 text-sm text-gray-500">
           <Calendar className="h-4 w-4" />
           <span>Last updated: {new Date().toLocaleDateString('en-IN')}</span>
         </div>
@@ -356,12 +355,12 @@ export default function AdminDashboard() {
             <CardContent className="p-5 relative z-10">
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{stat.title}</p>
-                  <p className="text-2xl font-bold text-gray-700">{stat.value}</p>
+                  <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">{stat.title}</p>
+                  <p className="text-2xl font-bold text-gray-800">{stat.value}</p>
                   <div className="flex items-center gap-1 text-xs">
-                    <TrendingUp className="h-3 w-3 text-gray-400" />
+                    <TrendingUp className="h-3 w-3 text-gray-500" />
                     <span className={`font-medium ${stat.changeColor}`}>{stat.change}</span>
-                    <span className="text-gray-400">vs last month</span>
+                    <span className="text-gray-500">vs last month</span>
                   </div>
                 </div>
                 <div className={`p-3 rounded-full bg-white shadow-sm`}>
@@ -384,8 +383,8 @@ export default function AdminDashboard() {
             <CardContent className="p-5">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{stat.title}</p>
-                  <p className="text-xl font-bold text-gray-700">{stat.value}</p>
+                  <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">{stat.title}</p>
+                  <p className="text-xl font-bold text-gray-800">{stat.value}</p>
                 </div>
                 <div className={`p-2 rounded-full bg-white shadow-sm`}>
                   <stat.icon className={`h-5 w-5 ${stat.color}`} />
@@ -399,30 +398,30 @@ export default function AdminDashboard() {
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Revenue & Orders Trend */}
-        <Card className="bg-white border border-gray-100 rounded-lg shadow-sm animate-in slide-in-from-left duration-700">
+        <Card className="bg-white border border-gray-200 rounded-lg shadow-sm animate-in slide-in-from-left duration-700">
           <CardHeader className="pb-2">
             <div className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5 text-blue-400" />
-              <CardTitle className="text-xl font-bold bg-gradient-to-r from-blue-400 to-teal-400 bg-clip-text text-transparent">
+              <BarChart3 className="h-5 w-5 text-gray-600" />
+              <CardTitle className="text-xl font-bold bg-gradient-to-r from-gray-600 to-gray-800 bg-clip-text text-transparent">
                 Sales Trends
               </CardTitle>
             </div>
-            <CardDescription className="text-sm text-gray-400">Monthly revenue and orders performance</CardDescription>
+            <CardDescription className="text-sm text-gray-500">Monthly revenue and orders performance</CardDescription>
           </CardHeader>
           <CardContent className="p-4">
             <ChartContainer config={chartConfig} className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={monthlyData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                   <XAxis 
                     dataKey="month" 
-                    stroke="#9ca3af"
+                    stroke="#6b7280"
                     fontSize={12}
                     tickLine={false}
                     axisLine={false}
                   />
                   <YAxis 
-                    stroke="#9ca3af"
+                    stroke="#6b7280"
                     fontSize={12}
                     tickLine={false}
                     axisLine={false}
@@ -432,18 +431,18 @@ export default function AdminDashboard() {
                   <Line 
                     type="monotone" 
                     dataKey="revenue" 
-                    stroke="#34d399" 
+                    stroke="#4b5563" 
                     strokeWidth={2}
-                    dot={{ fill: "#34d399", strokeWidth: 1, r: 3 }}
-                    activeDot={{ r: 5, stroke: "#34d399", strokeWidth: 1 }}
+                    dot={{ fill: "#4b5563", strokeWidth: 1, r: 3 }}
+                    activeDot={{ r: 5, stroke: "#4b5563", strokeWidth: 1 }}
                   />
                   <Line 
                     type="monotone" 
                     dataKey="orders" 
-                    stroke="#60a5fa" 
+                    stroke="#6b7280" 
                     strokeWidth={2}
-                    dot={{ fill: "#60a5fa", strokeWidth: 1, r: 3 }}
-                    activeDot={{ r: 5, stroke: "#60a5fa", strokeWidth: 1 }}
+                    dot={{ fill: "#6b7280", strokeWidth: 1, r: 3 }}
+                    activeDot={{ r: 5, stroke: "#6b7280", strokeWidth: 1 }}
                   />
                 </LineChart>
               </ResponsiveContainer>
@@ -452,15 +451,15 @@ export default function AdminDashboard() {
         </Card>
 
         {/* Payment Status Distribution */}
-        <Card className="bg-white border border-gray-100 rounded-lg shadow-sm animate-in slide-in-from-right duration-700">
+        <Card className="bg-white border border-gray-200 rounded-lg shadow-sm animate-in slide-in-from-right duration-700">
           <CardHeader className="pb-2">
             <div className="flex items-center gap-2">
-              <Target className="h-5 w-5 text-green-400" />
-              <CardTitle className="text-xl font-bold bg-gradient-to-r from-green-400 to-teal-400 bg-clip-text text-transparent">
+              <Target className="h-5 w-5 text-gray-600" />
+              <CardTitle className="text-xl font-bold bg-gradient-to-r from-gray-600 to-gray-800 bg-clip-text text-transparent">
                 Payment Status
               </CardTitle>
             </div>
-            <CardDescription className="text-sm text-gray-400">Distribution of payment statuses</CardDescription>
+            <CardDescription className="text-sm text-gray-500">Distribution of payment statuses</CardDescription>
           </CardHeader>
           <CardContent className="p-4">
             <div className="h-[300px]">
@@ -484,9 +483,9 @@ export default function AdminDashboard() {
                       if (active && payload && payload.length) {
                         const data = payload[0].payload
                         return (
-                          <div className="bg-white p-2 border border-gray-100 rounded-md shadow-sm">
-                            <p className="font-semibold text-gray-700">{data.name}</p>
-                            <p className="text-xs text-gray-500">Count: {data.value}</p>
+                          <div className="bg-white p-2 border border-gray-200 rounded-md shadow-sm">
+                            <p className="font-semibold text-gray-800">{data.name}</p>
+                            <p className="text-xs text-gray-600">Count: {data.value}</p>
                           </div>
                         )
                       }
@@ -503,7 +502,7 @@ export default function AdminDashboard() {
                     className="w-3 h-3 rounded-full"
                     style={{ backgroundColor: item.color }}
                   ></div>
-                  <span className="text-xs font-medium text-gray-600">{item.name}</span>
+                  <span className="text-xs font-medium text-gray-700">{item.name}</span>
                 </div>
               ))}
             </div>
@@ -514,30 +513,30 @@ export default function AdminDashboard() {
       {/* Monthly Performance Comparison */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Monthly Orders Bar Chart */}
-        <Card className="bg-white border border-gray-100 rounded-lg shadow-sm animate-in slide-in-from-bottom duration-700 delay-200">
+        <Card className="bg-white border border-gray-200 rounded-lg shadow-sm animate-in slide-in-from-bottom duration-700 delay-200">
           <CardHeader className="pb-2">
             <div className="flex items-center gap-2">
-              <ShoppingCart className="h-5 w-5 text-purple-400" />
-              <CardTitle className="text-xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+              <ShoppingCart className="h-5 w-5 text-gray-600" />
+              <CardTitle className="text-xl font-bold bg-gradient-to-r from-gray-600 to-gray-800 bg-clip-text text-transparent">
                 Monthly Orders
               </CardTitle>
             </div>
-            <CardDescription className="text-sm text-gray-400">Order volume by month</CardDescription>
+            <CardDescription className="text-sm text-gray-500">Order volume by month</CardDescription>
           </CardHeader>
           <CardContent className="p-4">
             <ChartContainer config={chartConfig} className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={monthlyData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                   <XAxis 
                     dataKey="month" 
-                    stroke="#9ca3af"
+                    stroke="#6b7280"
                     fontSize={12}
                     tickLine={false}
                     axisLine={false}
                   />
                   <YAxis 
-                    stroke="#9ca3af"
+                    stroke="#6b7280"
                     fontSize={12}
                     tickLine={false}
                     axisLine={false}
@@ -545,7 +544,7 @@ export default function AdminDashboard() {
                   <ChartTooltip content={<ChartTooltipContent />} />
                   <Bar 
                     dataKey="orders" 
-                    fill="#a78bfa"
+                    fill="#6b7280"
                     radius={[3, 3, 0, 0]}
                   />
                 </BarChart>
@@ -555,15 +554,15 @@ export default function AdminDashboard() {
         </Card>
 
         {/* Customer Growth Area Chart */}
-        <Card className="bg-white border border-gray-100 rounded-lg shadow-sm animate-in slide-in-from-bottom duration-700 delay-300">
+        <Card className="bg-white border border-gray-200 rounded-lg shadow-sm animate-in slide-in-from-bottom duration-700 delay-300">
           <CardHeader className="pb-2">
             <div className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-blue-400" />
-              <CardTitle className="text-xl font-bold bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
+              <Users className="h-5 w-5 text-gray-600" />
+              <CardTitle className="text-xl font-bold bg-gradient-to-r from-gray-600 to-gray-800 bg-clip-text text-transparent">
                 Customer Growth
               </CardTitle>
             </div>
-            <CardDescription className="text-sm text-gray-400">New customers acquired monthly</CardDescription>
+            <CardDescription className="text-sm text-gray-500">New customers acquired monthly</CardDescription>
           </CardHeader>
           <CardContent className="p-4">
             <ChartContainer config={chartConfig} className="h-[300px]">
@@ -571,20 +570,20 @@ export default function AdminDashboard() {
                 <AreaChart data={monthlyData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorCustomers" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#a78bfa" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="#a78bfa" stopOpacity={0.1}/>
+                      <stop offset="5%" stopColor="#6b7280" stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor="#6b7280" stopOpacity={0.1}/>
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                   <XAxis 
                     dataKey="month" 
-                    stroke="#9ca3af"
+                    stroke="#6b7280"
                     fontSize={12}
                     tickLine={false}
                     axisLine={false}
                   />
                   <YAxis 
-                    stroke="#9ca3af"
+                    stroke="#6b7280"
                     fontSize={12}
                     tickLine={false}
                     axisLine={false}
@@ -593,7 +592,7 @@ export default function AdminDashboard() {
                   <Area
                     type="monotone"
                     dataKey="customers"
-                    stroke="#a78bfa"
+                    stroke="#6b7280"
                     strokeWidth={2}
                     fillOpacity={1}
                     fill="url(#colorCustomers)"
@@ -606,47 +605,45 @@ export default function AdminDashboard() {
       </div>
 
       {/* Quick Actions */}
-      <Card className="bg-white border border-gray-100 rounded-lg shadow-sm animate-in slide-in-from-bottom duration-500 delay-700">
-      <CardHeader className="pb-2">
-        <div className="flex items-center gap-2">
-          <Sparkles className="h-5 w-5 text-amber-400" />
-          <CardTitle className="text-xl font-bold bg-gradient-to-r from-gray-700 to-gray-500 bg-clip-text text-transparent">
-            Quick Actions
-          </CardTitle>
-        </div>
-        <CardDescription className="text-sm text-gray-400">Common administrative tasks</CardDescription>
-      </CardHeader>
-      <CardContent className="p-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div
-            className="group p-5 border border-gray-100 rounded-md hover:border-blue-100 hover:bg-gradient-to-br hover:from-blue-50 hover:to-blue-100 cursor-pointer transition-all duration-300 transform hover:scale-102 hover:shadow-sm"
-            onClick={handleManageEmployeesClick}
-          >
-            <Users className="h-8 w-8 text-blue-400 mb-3 group-hover:scale-105 transition-transform duration-300" />
-            <h3 className="font-bold text-base mb-1 text-gray-700">Manage Employees</h3>
-            <p className="text-xs text-gray-500">Add, edit, or remove employees</p>
+      <Card className="bg-white border border-gray-200 rounded-lg shadow-sm animate-in slide-in-from-bottom duration-500 delay-700">
+        <CardHeader className="pb-2">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-gray-600" />
+            <CardTitle className="text-xl font-bold bg-gradient-to-r from-gray-600 to-gray-800 bg-clip-text text-transparent">
+              Quick Actions
+            </CardTitle>
           </div>
-          <div
-            className="group p-5 border border-gray-100 rounded-md hover:border-green-100 hover:bg-gradient-to-br hover:from-green-50 hover:to-green-100 cursor-pointer transition-all duration-300 transform hover:scale-102 hover:shadow-sm"
-            onClick={handleReviewPaymentsClick}
-          >
-            <CreditCard className="h-8 w-8 text-green-400 mb-3 group-hover:scale-105 transition-transform duration-300" />
-            <h3 className="font-bold text-base mb-1 text-gray-700">Review Payments</h3>
-            <p className="text-xs text-gray-500">Approve or reject pending payments</p>
+          <CardDescription className="text-sm text-gray-500">Common administrative tasks</CardDescription>
+        </CardHeader>
+        <CardContent className="p-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div
+              className="group p-5 border border-gray-200 rounded-md hover:border-gray-300 hover:bg-gradient-to-br hover:from-gray-50 hover:to-gray-100 cursor-pointer transition-all duration-300 transform hover:scale-102 hover:shadow-sm"
+              onClick={handleManageEmployeesClick}
+            >
+              <Users className="h-8 w-8 text-gray-600 mb-3 group-hover:scale-105 transition-transform duration-300" />
+              <h3 className="font-bold text-base mb-1 text-gray-800">Manage Employees</h3>
+              <p className="text-xs text-gray-600">Add, edit, or remove employees</p>
+            </div>
+            <div
+              className="group p-5 border border-gray-200 rounded-md hover:border-gray-300 hover:bg-gradient-to-br hover:from-gray-50 hover:to-gray-100 cursor-pointer transition-all duration-300 transform hover:scale-102 hover:shadow-sm"
+              onClick={handleReviewPaymentsClick}
+            >
+              <CreditCard className="h-8 w-8 text-gray-600 mb-3 group-hover:scale-105 transition-transform duration-300" />
+              <h3 className="font-bold text-base mb-1 text-gray-800">Review Payments</h3>
+              <p className="text-xs text-gray-600">Approve or reject pending payments</p>
+            </div>
+            <div
+              className="group p-5 border border-gray-200 rounded-md hover:border-gray-300 hover:bg-gradient-to-br hover:from-gray-50 hover:to-gray-100 cursor-pointer transition-all duration-300 transform hover:scale-102 hover:shadow-sm"
+              onClick={handleAttendanceReportClick}
+            >
+              <Clock className="h-8 w-8 text-gray-600 mb-3 group-hover:scale-105 transition-transform duration-300" />
+              <h3 className="font-bold text-base mb-1 text-gray-800">Attendance Report</h3>
+              <p className="text-xs text-gray-600">View employee attendance records</p>
+            </div>
           </div>
-          <div
-            className="group p-5 border border-gray-100 rounded-md hover:border-purple-100 hover:bg-gradient-to-br hover:from-purple-50 hover:to-purple-100 cursor-pointer transition-all duration-300 transform hover:scale-102 hover:shadow-sm"
-            onClick={handleAttendanceReportClick}
-          >
-            <Clock className="h-8 w-8 text-purple-400 mb-3 group-hover:scale-105 transition-transform duration-300" />
-            <h3 className="font-bold text-base mb-1 text-gray-700">Attendance Report</h3>
-            <p className="text-xs text-gray-500">View employee attendance records</p>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
     </div>
   )
 }
-
-

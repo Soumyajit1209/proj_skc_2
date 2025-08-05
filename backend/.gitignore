@@ -59,8 +59,6 @@ pids/
 .pm2
 
 # Uploads (if files are stored locally, adjust as needed)
-uploads/
-public/uploads/
 
 # Debug
 .idea/

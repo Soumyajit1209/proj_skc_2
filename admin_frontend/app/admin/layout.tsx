@@ -30,6 +30,7 @@ import {
   KeyRound,
 } from "lucide-react"
 import Link from "next/link"
+import { useTokenValidation } from "@/hooks/useTokenValidation"
 
 const navigation = [
   { name: "Dashboard", href: "/admin/dashboard", icon: BarChart3, color: "text-blue-600" },
@@ -51,6 +52,9 @@ export default function AdminLayout({
   const pathname = usePathname()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [adminName, setAdminName] = useState("Admin User")
+
+  // Initialize token validation
+  useTokenValidation({ role: "admin", intervalMs: 5000 })
 
   useEffect(() => {
     const token = localStorage.getItem("token")

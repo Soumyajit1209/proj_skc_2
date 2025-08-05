@@ -27,7 +27,8 @@ const {
     updateLocality,
     getOrders,
     getOrderDetails,
-    changeAdminPassword
+    changeAdminPassword,
+    checkToken
 } = require('../controllers/admin');
 
 router.post('/login', login);
@@ -69,5 +70,7 @@ router.get('/orders', authenticateToken, restrictToRole('admin'), getOrders);
 router.get('/orders/:id/details', authenticateToken, restrictToRole('admin'), getOrderDetails);
 
 router.post('/change-password', authenticateToken, changeAdminPassword);
+
+router.get('/check-token', authenticateToken, restrictToRole('admin'), checkToken);
 
 module.exports = router;
